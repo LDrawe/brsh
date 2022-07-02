@@ -1,0 +1,26 @@
+[
+    {
+        "id": "ae5b668a-bd73-41a0-84bd-1604a5ab79e9",
+        "username": "eduardo",
+        "password": "senha",
+        "privilegeLevel": 0
+    },
+    {
+        "id": "1dcdad37-d144-4c6a-b4c3-3feda1cdbdb4",
+        "username": "rodrigo",
+        "password": "so",
+        "privilegeLevel": 0
+    },
+    {
+        "id": "7f8ce84c-7ac8-49ba-86de-638f76223d0a",
+        "username": "root",
+        "password": "root",
+        "privilegeLevel": 1
+    },
+    {
+        "id": "7346a0c7-9f34-476b-8e61-a3c160b93b51",
+        "username": "eu",
+        "password": "cmgmsm",
+        "privilegeLevel": 0
+    }
+]
