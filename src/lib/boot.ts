@@ -1,5 +1,10 @@
-// import { readFileSync } from 'fs';
-// const users = JSON.parse(readFileSync('./src/config/users.json', 'utf-8'));
+import fs from 'fs'
+import users from '@config/users.json'
 
-// // function handleUsersDirectories() {
-// // }
+function boot ():void {
+  users.forEach(user => {
+    if (!fs.existsSync(`home/${user.username}`)) fs.mkdirSync(`home/${user.username}`, { recursive: true })
+  })
+}
+
+export { boot }

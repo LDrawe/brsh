@@ -1,16 +1,19 @@
 import { prompt } from '@utils/prompt'
-import { terminal } from '@lib/terminal'
 import users from '@config/users.json'
-import { IUser } from '../types/User'
+import { IUser } from 'types/User'
+import { IAppState } from 'types/AppState'
 
-function handleLogin (username: string, password: string): IUser | null {
-  for (let i = 0; i < users.length; i++) {
-    if (users[i].username === username && users[i].password === password) return users[i]
+function handleLogin (appState:IAppState): IUser | null {
+  const loggedUser = users.find(user => user.username === appState.commands[0] && user.password === appState.commands[1]) || null
+
+  if (loggedUser) {
+    appState.user = loggedUser
   }
-  return null
+
+  return loggedUser
 }
 
-function authenticateUser () {
+function getUserCredentials () {
   const username = prompt('Usuário: ')
   const password = prompt('Senha: ')
 
@@ -20,24 +23,25 @@ function authenticateUser () {
   }
 }
 
-function loginScreen () {
-  let user = null
-  let isUserLogged = false
+function handleAuthentication (appState?:IAppState): IUser {
+  let user: IUser | null
 
-  while (!isUserLogged) {
-    // const { username, password } = authenticateUser();
+  do {
+    const { username, password } = getUserCredentials()
 
-    // login = handleLogin(username, password);
-    user = handleLogin('eduardo', 'senha')
-    isUserLogged = Boolean(user)
+    user = handleLogin({ commands: [username, password] })
+    // user = handleLogin({ commands: ['eduardo', 'senha'] })
 
-    if (user) {
-      console.clear()
-      terminal(user)
-    } else {
+    if (!user) {
       console.log('Usuário ou senha incorretos')
     }
+  } while (!user)
+
+  if (appState) {
+    appState.user = user
   }
+
+  return user
 }
 
-export { loginScreen, handleLogin, authenticateUser }
+export { handleAuthentication, handleLogin, getUserCredentials }

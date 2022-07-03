@@ -16,11 +16,5 @@
         "username": "root",
         "password": "root",
         "privilegeLevel": 1
-    },
-    {
-        "id": "7346a0c7-9f34-476b-8e61-a3c160b93b51",
-        "username": "eu",
-        "password": "cmgmsm",
-        "privilegeLevel": 0
     }
 ]
