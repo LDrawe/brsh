@@ -5,13 +5,14 @@ import dree from 'dree'
 import users from '@config/users.json'
 import { IUser } from 'types/User'
 import { IAppState } from 'types/AppState'
+import { handleAuthentication, handleLogin } from '@lib/authentication'
 
 /**
   * Lista o conteúdo do diretório em ordem alfabética
   * @param {string} folder
   * Array de comandos
 */
-export function listar ({ commands: [path = './'] }: IAppState):void {
+function listar ({ commands: [path = './'] }: IAppState):void {
   const filesArray = fs.readdirSync(path, { withFileTypes: true })
   filesArray.forEach(element => process.env.NODE_ENV !== 'test' && console.log(element.isDirectory() ? '📁 ' : '🗄️ ', element.name))
 }
@@ -21,7 +22,7 @@ export function listar ({ commands: [path = './'] }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação com um array que contém o diretório a ser listado
 */
-export function listarinv ({ commands: [path = './'] }: IAppState):void {
+function listarinv ({ commands: [path = './'] }: IAppState):void {
   const filesArray = fs.readdirSync(path, { withFileTypes: true }).reverse()
   filesArray.forEach(element => process.env.NODE_ENV !== 'test' && console.log(element.isDirectory() ? '📁 ' : '🗄️ ', element.name))
 }
@@ -31,7 +32,7 @@ export function listarinv ({ commands: [path = './'] }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação com um array que contém o diretório a ser listado
 */
-export function listartudo ({ commands: [path = './'] }: IAppState):void {
+function listartudo ({ commands: [path = './'] }: IAppState):void {
   const tree = dree.parse(path, {
     followLinks: true, // Pode não funcionar no Windows
     exclude: /node_modules/
@@ -44,7 +45,7 @@ export function listartudo ({ commands: [path = './'] }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação com um array que contém o caminho de um diretório ou arquivo a ser listado
 */
-export function listaratr ({ commands: [path = './'] }: IAppState):void {
+function listaratr ({ commands: [path = './'] }: IAppState):void {
   console.log(fs.lstatSync(path))
 }
 
@@ -53,7 +54,7 @@ export function listaratr ({ commands: [path = './'] }: IAppState):void {
   * @param {IAppState} appState
   *  Estado da aplicação com um array que contém o caminho e o arquivo a ser buscado
 */
-export function buscar ({ commands: [arquivo, pathToSearch = './'] }: IAppState):void {
+function buscar ({ commands: [arquivo, pathToSearch = './'] }: IAppState):void {
   if (path.basename(pathToSearch) === 'node_modules') return
 
   const dir = fs.readdirSync(pathToSearch, { withFileTypes: true })
@@ -80,7 +81,7 @@ export function buscar ({ commands: [arquivo, pathToSearch = './'] }: IAppState)
   * @param {IAppState} appState
   * Estado da aplicação com um array que contém o caminho do arquivo a ser criado e os dados a serem escritos
 */
-export function carq ({ commands }: IAppState):void {
+function carq ({ commands }: IAppState):void {
   const file = commands[0]
 
   if (!file || !path.extname(file)) {
@@ -102,7 +103,7 @@ export function carq ({ commands }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação contendo o usuário logado e um array com as credenciais do novo usuário
 */
-export function criarusr (appState: IAppState):void {
+function criarusr (appState: IAppState):void {
   if (appState.user.privilegeLevel < 1) {
     console.log('Você não tem permissão para isto')
     return
@@ -135,7 +136,7 @@ export function criarusr (appState: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação contendo o usuário logado e um array contendo o nome do usuário
 */
-export function deletarusr (appState: IAppState):void {
+function deletarusr (appState: IAppState):void {
   if (appState.user.privilegeLevel < 1) {
     console.log('Você não tem permissão para isto')
     return
@@ -171,7 +172,7 @@ export function deletarusr (appState: IAppState):void {
  * @param {IAppState} appState
  * Estado da aplicação contendo um array com o caminho
 */
-export function cdir ({ commands: [path] }: IAppState):void {
+function cdir ({ commands: [path] }: IAppState):void {
   fs.mkdirSync(path, { recursive: true })
 }
 
@@ -180,7 +181,7 @@ export function cdir ({ commands: [path] }: IAppState):void {
  * @param {IAppState} appState
  * Estado da aplicação contendo um array com o caminho
 */
-export function rdir ({ commands: [path] }: IAppState):void {
+function rdir ({ commands: [path] }: IAppState):void {
   fs.rmdirSync(path)
 }
 
@@ -189,7 +190,7 @@ export function rdir ({ commands: [path] }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação contendo um array com o caminho
 */
-export function apagar ({ commands: [path] }: IAppState):void {
+function apagar ({ commands: [path] }: IAppState):void {
   fs.rmSync(path, { recursive: true })
 }
 
@@ -198,7 +199,7 @@ export function apagar ({ commands: [path] }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação contendo o usuário logado e um array contendo o nome do usuário
 */
-export function copiar ({ commands: [origin, destination] }: IAppState):void {
+function copiar ({ commands: [origin, destination] }: IAppState):void {
   fs.copyFileSync(origin, destination)
 }
 
@@ -207,7 +208,7 @@ export function copiar ({ commands: [origin, destination] }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação um array com o nome do novo caminho
 */
-export function mudar ({ commands: [path] }: IAppState):void {
+function mudar ({ commands: [path] }: IAppState):void {
   process.chdir(path)
 }
 
@@ -216,7 +217,7 @@ export function mudar ({ commands: [path] }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação contendo um array com o caminho
 */
-export function renomear ({ commands: [oldName, newName] }: IAppState):void {
+function renomear ({ commands: [oldName, newName] }: IAppState):void {
   fs.renameSync(oldName, newName)
 }
 
@@ -225,6 +226,27 @@ export function renomear ({ commands: [oldName, newName] }: IAppState):void {
   * @param {IAppState} appState
   * Estado da aplicação
 */
-export function atual (appState: IAppState):void {
+function atual (appState: IAppState):void {
   console.log(process.cwd())
+}
+
+export const acceptedCommands = {
+  listar,
+  listarinv,
+  listaratr,
+  listartudo,
+  buscar,
+  carq,
+  atual,
+  renomear,
+  mudar,
+  cdir,
+  copiar,
+  criarusr,
+  deletarusr,
+  rdir,
+  apagar,
+  clear: console.clear,
+  alterarusr: handleLogin,
+  sair: handleAuthentication
 }
