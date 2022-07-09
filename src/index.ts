@@ -1,35 +1,34 @@
+import path from 'path'
 import { boot } from '@lib/boot'
-import { acceptedCommands, zsh } from '@utils/prompt'
-import { IUser } from 'types/User'
+import { acceptedCommands } from '@lib/commands'
+import { zsh } from '@utils/prompt'
+import { IAppState } from 'types/AppState'
 
 console.clear()
 boot()
 
-function main ():void {
-  let cli = ''
-  const user: IUser = acceptedCommands.sair()
-
-  const state = {
-    commands: [],
-    user
-  }
-
-  do {
-    cli = zsh(state.user.username)
-
-    if (cli == null) process.exit()
-
-    state.commands = cli.trim().split(' ')
-
-    const command = state.commands.shift() // Pega qual foi a primeira string digitada pelo usuário (que é o comando a ser executado)
-
-    try {
-      const executeCommand = acceptedCommands[command]
-      executeCommand?.(state)
-    } catch (error) {
-      console.log(error.message)
-    }
-  } while (cli !== 'quit')
+let cli = ''
+const state: IAppState = {
+  command: '',
+  arguments: [],
+  currentFolder: path.resolve('home'),
+  user: null
 }
 
-main()
+state.user = acceptedCommands.sair(state)
+
+do {
+  cli = zsh(state.user.username, state.currentFolder)
+
+  if (cli == null) process.exit()
+
+  state.arguments = cli.trim().split(' ')
+
+  state.command = state.arguments.shift() // Pega qual foi a primeira string digitada pelo usuário (que é o comando a ser executado)
+  try {
+    const executeCommand = acceptedCommands[state.command]
+    executeCommand?.(state)
+  } catch (error) {
+    console.log(error.message)
+  }
+} while (cli !== 'quit')

@@ -1,13 +1,18 @@
+import path from 'path'
 import { prompt } from '@utils/prompt'
 import users from '@config/users.json'
 import { IUser } from 'types/User'
 import { IAppState } from 'types/AppState'
+import { compareSync } from 'bcrypt'
 
-function handleLogin (appState:IAppState): IUser | null {
-  const loggedUser = users.find(user => user.username === appState.commands[0] && user.password === appState.commands[1]) || null
+function handleLogin (appState: IAppState): IUser | null {
+  const loggedUser = users.find(user =>
+    user.username === appState.arguments[0] && compareSync(appState.arguments[1], user.password)
+  ) || null
 
   if (loggedUser) {
     appState.user = loggedUser
+    appState.currentFolder = path.resolve('home', loggedUser.username)
   }
 
   return loggedUser
@@ -23,14 +28,14 @@ function getUserCredentials () {
   }
 }
 
-function handleAuthentication (appState?:IAppState): IUser {
+function handleAuthentication (appState?: IAppState): IUser {
   let user: IUser | null
 
   do {
     const { username, password } = getUserCredentials()
 
-    user = handleLogin({ commands: [username, password] })
-    // user = handleLogin({ commands: ['eduardo', 'senha'] })
+    user = handleLogin({ ...appState, arguments: [username, password] })
+    // user = handleLogin({ ...appState, arguments: ['eduardo', 'senha'] })
 
     if (!user) {
       console.log('Usuário ou senha incorretos')
@@ -39,6 +44,7 @@ function handleAuthentication (appState?:IAppState): IUser {
 
   if (appState) {
     appState.user = user
+    appState.currentFolder = path.resolve('home', appState.user.username)
   }
 
   return user
