@@ -1,0 +1,37 @@
+{
+    "eduardo": [
+        {
+            "id": "1a1c4128-dddb-455c-aed6-1fc0f0b2a792",
+            "path": "home/eduardo",
+            "created_at": 1657054053,
+            "files": [
+                {
+                    "id": "d2ecdb08-cb0b-4cfb-aeba-d1a1698796c0",
+                    "name": "setup.txt",
+                    "created_at": 1657054053,
+                    "data": "monte de coisa inutil"
+                },
+                {
+                    "id": "88fe26ee-b0e1-40a0-af52-666173a16c87",
+                    "name": "main.py",
+                    "created_at": 1657054797966,
+                    "data": "print('Koe rapaziada')"
+                },
+                {
+                    "id": "9a666260-2749-4a4f-949a-3d134a4b7d73",
+                    "name": "home.rb",
+                    "created_at": 1657404113437,
+                    "data": ""
+                }
+            ]
+        }
+    ],
+    "root": [
+        {
+            "id": "f3e741ed-f76a-4c28-8dd4-3e54e91bc9b1",
+            "path": "home/root",
+            "created_at": 1657054053,
+            "files": []
+        }
+    ]
+}

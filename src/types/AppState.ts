@@ -1,6 +1,8 @@
 import { IUser } from 'types/User'
 
 export interface IAppState {
-    commands: string[],
+    command: string,
+    arguments: string[],
+    currentFolder: string;
     user?: IUser | null
 }

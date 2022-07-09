@@ -2,19 +2,19 @@
     {
         "id": "ae5b668a-bd73-41a0-84bd-1604a5ab79e9",
         "username": "eduardo",
-        "password": "senha",
-        "privilegeLevel": 0
-    },
-    {
-        "id": "1dcdad37-d144-4c6a-b4c3-3feda1cdbdb4",
-        "username": "rodrigo",
-        "password": "so",
+        "password": "$2a$10$zyiR/8jDD2l9mfDNdwUZH.Bu9Bs4LyM8tpDwlRtkMTbAhHiE9vuP.",
         "privilegeLevel": 0
     },
     {
         "id": "7f8ce84c-7ac8-49ba-86de-638f76223d0a",
         "username": "root",
-        "password": "root",
+        "password": "$2a$10$Hfvj4FnUBm6Bn63OIYXN0OrP91BI8V8J91DprHFOUjvbMJeSJgoQm",
         "privilegeLevel": 1
+    },
+    {
+        "id": "c3644cf2-e342-45cf-87a8-0b2c17d00dbb",
+        "username": "rodrigo",
+        "password": "$2a$10$Wa0ulUH.G38dvWtaSGYv.ejjogl5KrdPT/fT/yU8j6uXw0JO5F7iS",
+        "privilegeLevel": 0
     }
 ]
