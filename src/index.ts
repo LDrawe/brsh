@@ -4,7 +4,6 @@ import { acceptedCommands } from '@lib/commands'
 import { zsh } from '@utils/prompt'
 import { IAppState } from 'types/AppState'
 
-console.clear()
 boot()
 
 let cli = ''

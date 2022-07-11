@@ -20,7 +20,7 @@ function handleLogin (appState: IAppState): IUser | null {
 
 function getUserCredentials () {
   const username = prompt('Usuário: ')
-  const password = prompt('Senha: ')
+  const password = prompt('Senha: ', { echo: '*' })
 
   return {
     username,
@@ -30,6 +30,7 @@ function getUserCredentials () {
 
 function handleAuthentication (appState?: IAppState): IUser {
   let user: IUser | null
+  console.clear()
 
   do {
     const { username, password } = getUserCredentials()
