@@ -130,7 +130,12 @@ export const acceptedCommands = {
 
     fs.writeFileSync(path.resolve(appState.currentFolder, file), data)
     const index = tree[user].findIndex((element: IFolder) => path.resolve(element.path) === appState.currentFolder)
-    tree[user][index].files.push({ id: randomUUID(), name: file, created_at: Date.now(), data })
+    tree[user][index].files.push({
+      id: randomUUID(),
+      name: file,
+      created_at: Date.now(),
+      data
+    })
     fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
   },
 
