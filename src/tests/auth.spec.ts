@@ -2,7 +2,8 @@ import { handleLogin } from '@lib/authentication'
 
 describe('Should be able to test login', () => {
   it('should be able fail login', () => {
-    expect(handleLogin({ arguments: ['eduardo', 'teste'], command: '', currentFolder: '', user: null })).toBe(null)
+    const user = handleLogin({ arguments: ['eduardo', 'teste'], command: '', currentFolder: '', user: null })
+    expect(user).toBe(null)
   })
 
   it('should be able pass login', () => {
