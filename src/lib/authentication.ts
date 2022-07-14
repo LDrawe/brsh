@@ -1,11 +1,11 @@
 import path from 'path'
+import { compareSync } from 'bcryptjs'
 import { prompt } from '@utils/prompt'
-import users from '@config/users.json'
-import { IUser } from 'types/User'
-import { IAppState } from 'types/AppState'
-import { compareSync } from 'bcrypt'
+import { IState, IUser } from 'types/Aplication'
 
-function handleLogin (appState: IAppState): IUser | null {
+import users from '@config/users.json'
+
+function handleLogin (appState: IState): IUser | null {
   const loggedUser = users.find(user =>
     user.username === appState.arguments[0] && compareSync(appState.arguments[1], user.password)
   ) || null
@@ -28,7 +28,7 @@ function getUserCredentials () {
   }
 }
 
-function handleAuthentication (appState?: IAppState): IUser {
+function handleAuthentication (appState?: IState): IUser {
   let user: IUser | null
   console.clear()
 
