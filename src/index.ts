@@ -2,12 +2,12 @@ import path from 'path'
 import { boot } from '@lib/boot'
 import { acceptedCommands } from '@lib/commands'
 import { zsh } from '@utils/prompt'
-import { IAppState } from 'types/AppState'
+import { IState } from 'types/Aplication'
 
 boot()
 
 let cli = ''
-const state: IAppState = {
+const state: IState = {
   command: '',
   arguments: [],
   currentFolder: path.resolve('home'),
@@ -26,7 +26,11 @@ do {
   state.command = state.arguments.shift() // Pega qual foi a primeira string digitada pelo usuário (que é o comando a ser executado)
   try {
     const executeCommand = acceptedCommands[state.command]
-    executeCommand?.(state)
+    if (executeCommand) {
+      executeCommand(state)
+    } else {
+      console.log('Comando não reconhecido. Digite "help" para obter uma lista dos comandos disponíveis')
+    }
   } catch (error) {
     console.log(error.message)
   }
