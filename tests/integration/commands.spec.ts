@@ -14,7 +14,7 @@ const state: IState = {
 
 beforeAll(() => {
   boot()
-  state.user = consultUser({ ...state, arguments: ['eduardo', 'senha'] })
+  state.user = consultUser({ ...state, arguments: ['eduardo', '123456'] })
 })
 
 describe('Listing commands', () => {
