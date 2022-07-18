@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { acceptedCommands } from '@lib/commands'
-import { handleLogin } from '@lib/authentication'
+import { consultUser } from '@lib/authentication'
 import { boot } from '@lib/boot'
 import { IState } from 'types/Aplication'
 
@@ -14,7 +14,7 @@ const state: IState = {
 
 beforeAll(() => {
   boot()
-  state.user = handleLogin({ ...state, arguments: ['eduardo', 'senha'] })
+  state.user = consultUser({ ...state, arguments: ['eduardo', 'senha'] })
 })
 
 describe('Listing commands', () => {
@@ -66,7 +66,7 @@ describe('Failing at executing admin commands', () => {
 })
 
 describe('Sucess at executing admin commands', () => {
-  const user = handleLogin({ ...state, arguments: ['root', 'root'] })
+  const user = consultUser({ ...state, arguments: ['root', 'root'] })
   it('should be able to fail at creating user', () => {
     const code = acceptedCommands.criarusr({ ...state, user, arguments: ['rodrigo-faro', 'elegosta'] })
     expect(code).toBe(0)

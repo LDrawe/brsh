@@ -3,7 +3,7 @@ import path from 'path'
 import { randomUUID } from 'crypto'
 import { genSaltSync, hashSync } from 'bcryptjs'
 import { parse } from 'dree'
-import { handleAuthentication, handleLogin } from '@lib/authentication'
+import { handleAuthentication, consultUser } from '@lib/authentication'
 import { validatePath } from '@utils/validator'
 
 import { IState, IUser } from 'types/Aplication'
@@ -188,7 +188,7 @@ export const acceptedCommands = {
     const caminho = path.resolve(state.currentFolder, state.arguments[0])
 
     fs.rmSync(caminho, { recursive: true })
-    if (!path.extname(state.arguments[0])) { // Se for arquivo
+    if (path.extname(state.arguments[0])) { // Se for arquivo
       const index = tree[username].findIndex((folder: IFolder) =>
         path.resolve(folder.path) === path.dirname(caminho)
       )
@@ -460,7 +460,7 @@ export const acceptedCommands = {
     return 0
   },
   clear: console.clear,
-  alterarusr: handleLogin,
+  alterarusr: consultUser,
   sair: handleAuthentication,
   quit: () => { }
 }
