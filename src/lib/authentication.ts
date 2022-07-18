@@ -27,7 +27,7 @@ function handleAuthentication (appState?: IState): IUser {
     const password = prompt('Senha: ', { echo: '*' })
 
     user = consultUser({ ...appState, arguments: [username, password] })
-    // user = consultUser({ ...appState, arguments: ['eduardo', '123456'] })
+    // user = consultUser({ ...appState, arguments: ['eduardo', 'senha'] })
 
     if (!user) {
       console.log('Usuário ou senha incorretos')
