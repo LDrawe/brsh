@@ -1,30 +1,18 @@
 {
-    "eduardo": [
-        {
-            "id": "1a1c4128-dddb-455c-aed6-1fc0f0b2a792",
-            "path": "home/eduardo",
-            "created_at": 1657054053,
-            "files": [
-                {
-                    "id": "88fe26ee-b0e1-40a0-af52-666173a16c87",
-                    "name": "main.py",
-                    "created_at": 1657054797966,
-                    "data": "print('Hello world')"
-                },
-                {
-                    "id": "d2ecdb08-cb0b-4cfb-aeba-d1a1698796c0",
-                    "name": "setup.txt",
-                    "created_at": 1657054053,
-                    "data": "teste teste teste"
-                }
-            ]
-        }
-    ],
     "root": [
         {
             "id": "f3e741ed-f76a-4c28-8dd4-3e54e91bc9b1",
             "path": "home/root",
             "created_at": 1657054053,
+            "files": []
+        }
+    ],
+    "eduardo": [
+        {
+            "id": "c8412006-2cd8-4fed-93e7-f5391375739d",
+            "name": "eduardo",
+            "created_at": 1658111819032,
+            "path": "home/eduardo",
             "files": []
         }
     ]

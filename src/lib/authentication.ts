@@ -5,7 +5,7 @@ import { IState, IUser } from 'types/Aplication'
 
 import users from '@config/users.json'
 
-function handleLogin (appState: IState): IUser | null {
+function consultUser (appState: IState): IUser | null {
   const loggedUser = users.find(user =>
     user.username === appState.arguments[0] && compareSync(appState.arguments[1], user.password)
   ) || null
@@ -18,25 +18,16 @@ function handleLogin (appState: IState): IUser | null {
   return loggedUser
 }
 
-function getUserCredentials () {
-  const username = prompt('Usuário: ')
-  const password = prompt('Senha: ', { echo: '*' })
-
-  return {
-    username,
-    password
-  }
-}
-
 function handleAuthentication (appState?: IState): IUser {
   let user: IUser | null
   console.clear()
 
   do {
-    const { username, password } = getUserCredentials()
+    const username = prompt('Usuário: ')
+    const password = prompt('Senha: ', { echo: '*' })
 
-    user = handleLogin({ ...appState, arguments: [username, password] })
-    // user = handleLogin({ ...appState, arguments: ['eduardo', 'senha'] })
+    user = consultUser({ ...appState, arguments: [username, password] })
+    // user = consultUser({ ...appState, arguments: ['eduardo', 'senha'] })
 
     if (!user) {
       console.log('Usuário ou senha incorretos')
@@ -51,4 +42,4 @@ function handleAuthentication (appState?: IState): IUser {
   return user
 }
 
-export { handleAuthentication, handleLogin, getUserCredentials }
+export { handleAuthentication, consultUser }
