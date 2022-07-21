@@ -32,6 +32,6 @@ do {
       console.log('Comando não reconhecido. Digite "help" para obter uma lista dos comandos disponíveis')
     }
   } catch (error) {
-    console.log(error.message)
+    console.log(error.message || error)
   }
 } while (cli !== 'quit')

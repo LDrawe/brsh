@@ -13,7 +13,6 @@ import users from '@config/users.json'
 import tree from '@config/tree.json'
 
 const specialCharacters = /[ `!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/
-
 export const acceptedCommands = {
 
   help: ({ user }: IState): number => {
@@ -53,7 +52,7 @@ export const acceptedCommands = {
   * Estado da aplicação com um array que contém o diretório a ser listado
   */
   listar: (state: IState): number => {
-    if (!validatePath(state, state.arguments[0])) return 1
+    if (!validatePath(state)) return 1
 
     const folderToList = state.arguments[0] || state.currentFolder
 
@@ -69,7 +68,7 @@ export const acceptedCommands = {
   * Estado da aplicação com um array que contém o diretório a ser listado
   */
   listarinv: (state: IState): number => {
-    if (!validatePath(state, state.arguments[0])) return 1
+    if (!validatePath(state)) return 1
 
     const filesArray = fs.readdirSync(state.currentFolder, { withFileTypes: true }).reverse()
     filesArray.forEach(element => console.log(element.isDirectory() ? '📁 ' : '🗄️ ', element.name))
@@ -86,11 +85,11 @@ export const acceptedCommands = {
 
     const pathToList = path.resolve(state.currentFolder, state.arguments[0] || './')
 
-    const tree = parse(pathToList, {
+    const dirAsTree = parse(pathToList, {
       followLinks: true, // Pode não funcionar no Windows
       exclude: /node_modules/
     })
-    console.log(tree)
+    console.log(dirAsTree)
     return 0
   },
 
@@ -114,11 +113,12 @@ export const acceptedCommands = {
       const fileName = path.basename(pathToList)
       const fileIndex: number = tree[username][folderIndex].files.findIndex((file: IFile) => file.name === fileName)
       const file: IFile = tree[username][folderIndex].files[fileIndex]
+
       console.table({ ...file, created_at: new Date(file.created_at).toLocaleString() })
       return 0
     }
 
-    const { files, ...folder }: IFolder = tree[state.user.username][folderIndex]
+    const { files, ...folder }: IFolder = tree[username][folderIndex]
     console.table({ ...folder, created_at: new Date(folder.created_at).toLocaleString(), owner: username })
 
     return 0
@@ -132,7 +132,7 @@ export const acceptedCommands = {
   carq: (state: IState): number => {
     if (!validatePath(state)) return 1
 
-    const user = state.user.username
+    const { username } = state.user
     const file = state.arguments[0]
     const fileType = path.extname(file)
 
@@ -164,13 +164,15 @@ export const acceptedCommands = {
 
     const data = state.arguments.join(' ')
     fs.writeFileSync(filePath, data)
-    const index = tree[user].findIndex((element: IFolder) => path.resolve(element.path) === path.dirname(filePath))
-    tree[user][index]?.files?.push({
+    const index = tree[username].findIndex((element: IFolder) => path.resolve(element.path) === path.dirname(filePath))
+
+    tree[username][index].files.push({
       id: randomUUID(),
       name,
       created_at: Date.now(),
       data
     })
+
     fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
 
     return 0
@@ -188,6 +190,7 @@ export const acceptedCommands = {
     const caminho = path.resolve(state.currentFolder, state.arguments[0])
 
     fs.rmSync(caminho, { recursive: true })
+
     if (path.extname(state.arguments[0])) { // Se for arquivo
       const index = tree[username].findIndex((folder: IFolder) =>
         path.resolve(folder.path) === path.dirname(caminho)
@@ -208,9 +211,35 @@ export const acceptedCommands = {
   * Estado da aplicação contendo o usuário logado e um array contendo o nome do usuário
   */
   copiar: (state: IState): number => {
-    if (!validatePath(state, state.arguments[0]) || validatePath(state, state.arguments[1])) return 1
+    const [file, folder] = state.arguments
 
-    fs.copyFileSync(state.arguments[0], state.arguments[1])
+    if (!validatePath(state) || !validatePath(state, folder)) return 1
+
+    const name = path.basename(file)
+    const origin = path.resolve(state.currentFolder, file)
+
+    if (path.extname(file)) {
+      const destFile = path.resolve(state.currentFolder, folder, file)
+
+      fs.copyFileSync(origin, destFile)
+      const folderIndex = tree[state.user.username].findIndex((folder: IFolder) => path.resolve(folder.path) === destFile)
+      const data = fs.readFileSync(origin, 'utf-8')
+      const copiedFile = {
+        id: randomUUID(),
+        name,
+        created_at: Date.now(),
+        data
+      }
+      tree[state.user.username][folderIndex].files.push(copiedFile)
+    } else {
+      const dest = path.resolve(state.currentFolder, folder)
+      const originIndex = tree[state.user.username].findIndex((folder: IFolder) => path.resolve(folder.path) === origin)
+      const destIndex = tree[state.user.username].findIndex((folder: IFolder) => path.resolve(folder.path) === dest)
+      fs.cpSync(origin, dest, { recursive: true })
+      tree[state.user.username][destIndex].files.push(tree[state.user.username][originIndex].files)
+    }
+
+    fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
 
     return 0
   },
@@ -230,7 +259,7 @@ export const acceptedCommands = {
       console.log('Destino não pode ser um arquivo')
     }
 
-    if (!validatePath(state, state.arguments[0]) || validatePath(state, state.arguments[1])) return 1
+    if (!validatePath(state) || !validatePath(state, state.arguments[1])) return 1
 
     const username = state.user.username
     const folderBase = path.basename(state.arguments[1])
@@ -303,11 +332,10 @@ export const acceptedCommands = {
     }
 
     const folder = state.arguments[0]
+    const { username } = state.user
 
     const fullPath = path.resolve(state.currentFolder, folder)
     fs.mkdirSync(fullPath, { recursive: true })
-
-    const { username } = state.user
 
     const newFolder: IFolder = {
       id: randomUUID(),
@@ -328,8 +356,16 @@ export const acceptedCommands = {
   */
   rdir: (state: IState): number => {
     if (!validatePath(state)) return 1
+    const directory = path.resolve(state.currentFolder, state.arguments[0])
+    const directoryContent = fs.readdirSync(directory)
+
+    if (directoryContent.length === 0) return 1
 
     fs.rmdirSync(state.arguments[0])
+    tree[state.user.username] = tree[state.user.username].filter((folder: IFolder) => path.resolve(folder.path) === directory)
+    fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
+
+    return 0
   },
 
   /**
@@ -355,8 +391,39 @@ export const acceptedCommands = {
   * @param {IState} state
   * Estado da aplicação contendo um array com o caminho
   */
-  renomear: ({ currentFolder, arguments: [oldName, newName] }: IState): number => {
-    fs.renameSync(path.resolve(currentFolder, oldName), path.resolve(currentFolder, newName))
+  renomear: (state: IState): number => {
+    const { currentFolder, arguments: [oldName, newName], user } = state
+
+    if (!validatePath(state)) return 1
+
+    if (specialCharacters.test(newName)) {
+      console.log('Proibido caracteres especiais')
+      return 1
+    }
+
+    const oldPath = path.resolve(currentFolder, oldName)
+    const newPath = path.resolve(currentFolder, newName)
+
+    const oldBaseName = path.basename(oldPath)
+    const baseName = path.basename(newPath)
+
+    fs.renameSync(oldPath, newPath)
+
+    if (path.extname(oldName)) { // Se for arquivo
+      const index = tree[user.username].findIndex((folder: IFolder) =>
+        path.resolve(folder.path) === path.dirname(newPath)
+      )
+      const fileIndex = tree[user.username][index].files.findIndex((file: IFile) => file.name === oldBaseName)
+      tree[user.username][index].files[fileIndex].name = baseName
+    } else {
+      const index = tree[user.username].findIndex((folder: IFolder) =>
+        path.resolve(folder.path) === oldPath
+      )
+      tree[user.username][index].path = tree[user.username][index].path.replace(oldBaseName, baseName)
+    }
+
+    fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
+
     return 0
   },
   /**
@@ -394,7 +461,7 @@ export const acceptedCommands = {
     const salt = genSaltSync()
     const hashedPassword = hashSync(password, salt)
 
-    const novoUser: IUser = {
+    const novoUser: IUser & { password: string } = {
       id: randomUUID(),
       username,
       password: hashedPassword,
@@ -402,22 +469,21 @@ export const acceptedCommands = {
     }
 
     users.push(novoUser)
-    fs.writeFileSync('./src/config/users.json', JSON.stringify(users, null, 4))
-    fs.mkdirSync(`./home/${username}`, { recursive: true })
 
     tree[username] = [{
       id: randomUUID(),
-      name: username,
       created_at: Date.now(),
       path: `home/${username}`,
       files: []
     }]
 
+    fs.mkdirSync(`./home/${username}`, { recursive: true })
+
     fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
+    fs.writeFileSync('./src/config/users.json', JSON.stringify(users, null, 4))
 
     return 0
   },
-
   /**
   * Delete um usuário e seu diretório no disco
   * @param {IState} state
@@ -453,6 +519,7 @@ export const acceptedCommands = {
 
     const filteredUsers = users.filter(user => user.username !== username)
     delete tree[username]
+
     fs.writeFileSync('./src/config/users.json', JSON.stringify(filteredUsers, null, 4))
     fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
     fs.rmdirSync(`./home/${username}`)

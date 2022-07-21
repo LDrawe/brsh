@@ -10,7 +10,6 @@ describe('Should be able to test login', () => {
     const loggedUser = consultUser({ arguments: ['eduardo', '123456'], command: '', currentFolder: '', user: null })
     expect(loggedUser).toHaveProperty('id')
     expect(loggedUser).toHaveProperty('username')
-    expect(loggedUser).toHaveProperty('password')
     expect(loggedUser).toHaveProperty('privilegeLevel')
   })
 })

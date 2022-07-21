@@ -5,20 +5,24 @@ import { IState, IUser } from 'types/Aplication'
 
 import users from '@config/users.json'
 
-function consultUser (appState: IState): IUser | null {
-  const loggedUser = users.find(user =>
+function consultUser (appState: IState): IUser| null {
+  const matchedUser = users.find(user =>
     user.username === appState.arguments[0] && compareSync(appState.arguments[1], user.password)
-  ) || null
+  )
 
-  if (loggedUser) {
-    appState.user = loggedUser
-    appState.currentFolder = path.resolve('home', loggedUser.username)
+  if (!matchedUser) {
+    return null
   }
 
-  return loggedUser
+  const { password, ...user } = matchedUser
+
+  appState.user = user
+  appState.currentFolder = path.resolve('home', user.username)
+
+  return user
 }
 
-function handleAuthentication (appState?: IState): IUser {
+function handleAuthentication (appState: IState): IUser {
   let user: IUser | null
   console.clear()
 
@@ -27,17 +31,16 @@ function handleAuthentication (appState?: IState): IUser {
     const password = prompt('Senha: ', { echo: '*' })
 
     user = consultUser({ ...appState, arguments: [username, password] })
-    // user = consultUser({ ...appState, arguments: ['eduardo', 'senha'] })
+    // user = consultUser({ ...appState, arguments: ['eduardo', '123456'] })
 
     if (!user) {
       console.log('Usuário ou senha incorretos')
     }
   } while (!user)
 
-  if (appState) {
-    appState.user = user
-    appState.currentFolder = path.resolve('home', appState.user.username)
-  }
+  appState.user = user
+  appState.currentFolder = path.resolve('home', appState.user.username)
+  console.clear()
 
   return user
 }

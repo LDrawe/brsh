@@ -10,7 +10,6 @@ describe('Validates the paths to the user directory only', () => {
     user: {
       id: 'ae5b668a-bd73-41a0-84bd-1604a5ab79e9',
       username: 'eduardo',
-      password: '$2a$10$zyiR/8jDD2l9mfDNdwUZH.Bu9Bs4LyM8tpDwlRtkMTbAhHiE9vuP.',
       privilegeLevel: 0
     }
   }

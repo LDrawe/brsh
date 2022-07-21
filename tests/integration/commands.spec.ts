@@ -9,12 +9,15 @@ const state: IState = {
   command: '',
   arguments: [],
   currentFolder: path.resolve('home', 'eduardo'),
-  user: null
+  user: {
+    id: 'd8c7ad9a-6bd8-457e-8762-878d7488aeb3',
+    username: 'eduardo',
+    privilegeLevel: 0
+  }
 }
 
 beforeAll(() => {
   boot()
-  state.user = consultUser({ ...state, arguments: ['eduardo', '123456'] })
 })
 
 describe('Listing commands', () => {
@@ -54,25 +57,27 @@ describe('File commands', () => {
   })
 })
 
-describe('Failing at executing admin commands', () => {
-  it('should be able to fail at creating user', () => {
-    const code = acceptedCommands.criarusr({ ...state, arguments: ['rodrigo', 'faro'] })
-    expect(code).toBe(1)
+describe('Admin commands', () => {
+  describe('Failing at executing admin commands', () => {
+    it('should be able to fail at creating user', () => {
+      const code = acceptedCommands.criarusr({ ...state, arguments: ['rodrigo', 'faro'] })
+      expect(code).toBe(1)
+    })
+    it('should be able to fail at deleting user', () => {
+      const code = acceptedCommands.deletarusr({ ...state, arguments: ['rodrigo'] })
+      expect(code).toBe(1)
+    })
   })
-  it('should be able to fail at deleting user', () => {
-    const code = acceptedCommands.deletarusr({ ...state, arguments: ['rodrigo'] })
-    expect(code).toBe(1)
-  })
-})
 
-describe('Sucess at executing admin commands', () => {
-  const user = consultUser({ ...state, arguments: ['root', 'root'] })
-  it('should be able to fail at creating user', () => {
-    const code = acceptedCommands.criarusr({ ...state, user, arguments: ['rodrigo-faro', 'elegosta'] })
-    expect(code).toBe(0)
-  })
-  it('should be able to fail at deleting user', () => {
-    const code = acceptedCommands.deletarusr({ ...state, user, arguments: ['rodrigo-faro'] })
-    expect(code).toBe(0)
+  describe('Sucess at executing admin commands', () => {
+    const user = consultUser({ ...state, arguments: ['root', 'root'] })
+    it('should be able to fail at creating user', () => {
+      const code = acceptedCommands.criarusr({ ...state, user, arguments: ['rodrigo-faro', 'elegosta'] })
+      expect(code).toBe(0)
+    })
+    it('should be able to fail at deleting user', () => {
+      const code = acceptedCommands.deletarusr({ ...state, user, arguments: ['rodrigo-faro'] })
+      expect(code).toBe(0)
+    })
   })
 })
