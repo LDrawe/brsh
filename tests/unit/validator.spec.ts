@@ -19,7 +19,7 @@ describe('Validates the paths to the user directory only', () => {
     expect(pathBelongToUser).toBe(false)
   })
   it('Should be able to acept provided path', () => {
-    const pathBelongToUser = validatePath(state, './')
+    const pathBelongToUser = validatePath(state)
     expect(pathBelongToUser).toBe(true)
   })
 })

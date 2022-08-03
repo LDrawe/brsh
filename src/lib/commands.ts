@@ -13,7 +13,8 @@ import users from '@config/users.json'
 import tree from '@config/tree.json'
 
 const specialCharacters = /[ `!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/
-export const acceptedCommands = {
+
+const acceptedCommands = {
 
   help: ({ user }: IState): number => {
     console.log(
@@ -104,12 +105,12 @@ export const acceptedCommands = {
     const { username } = state.user
 
     const pathToList = path.resolve(state.currentFolder, state.arguments[0] || './')
-    const extension = path.extname(pathToList)
-    const resolvedPath = extension === '' ? path.resolve(pathToList) : path.dirname(pathToList)
+    const isFile = fs.lstatSync(pathToList).isFile()
+    const resolvedPath = isFile ? path.dirname(pathToList) : path.resolve(pathToList)
 
     const folderIndex: number = tree[username].findIndex((folder: IFolder) => path.resolve(folder.path) === resolvedPath)
 
-    if (extension) {
+    if (isFile) {
       const fileName = path.basename(pathToList)
       const fileIndex: number = tree[username][folderIndex].files.findIndex((file: IFile) => file.name === fileName)
       const file: IFile = tree[username][folderIndex].files[fileIndex]
@@ -133,7 +134,7 @@ export const acceptedCommands = {
     if (!validatePath(state)) return 1
 
     const { username } = state.user
-    const file = state.arguments[0]
+    const file = state.arguments[0] || ''
     const fileType = path.extname(file)
 
     if (!file || !fileType) {
@@ -179,25 +180,42 @@ export const acceptedCommands = {
   },
 
   /**
-  * Delete a pasta ou arquivo no caminho informado
+  * Copia um arquivo ou diretório para o local
   * @param {IState} state
-  * Estado da aplicação contendo um array com o caminho
+  * Estado da aplicação contendo o usuário logado e um array contendo o nome do usuário
   */
-  apagar: (state: IState): number => {
-    if (!validatePath(state)) return 1
-    const username = state.user.username
-    const baseName = path.basename(state.arguments[0])
-    const caminho = path.resolve(state.currentFolder, state.arguments[0])
+  copiar: (state: IState): number => {
+    const [file, folder] = state.arguments
+    const { username } = state.user
 
-    fs.rmSync(caminho, { recursive: true })
+    if (!file || !folder) {
+      console.log('Forneça caminhos válidos!')
+      return 1
+    }
 
-    if (path.extname(state.arguments[0])) { // Se for arquivo
-      const index = tree[username].findIndex((folder: IFolder) =>
-        path.resolve(folder.path) === path.dirname(caminho)
-      )
-      tree[username][index].files = tree[username][index]?.files?.filter((file: IFile) => file.name !== baseName)
+    if (!validatePath(state) || !validatePath(state, folder)) return 1
+
+    const name = path.basename(file)
+    const origin = path.resolve(state.currentFolder, file)
+
+    if (fs.lstatSync(origin).isFile()) {
+      const destFile = path.resolve(state.currentFolder, folder, file)
+
+      fs.copyFileSync(origin, destFile)
+      const folderIndex = tree[username].findIndex((folder: IFolder) => path.resolve(folder.path) === path.dirname(destFile))
+      const copiedFile = {
+        id: randomUUID(),
+        name,
+        created_at: Date.now(),
+        data: fs.readFileSync(origin, 'utf-8')
+      }
+      tree[username][folderIndex].files.push(copiedFile)
     } else {
-      tree[username] = tree[username].filter((folder: IFolder) => path.resolve(folder.path) !== caminho)
+      const dest = path.resolve(state.currentFolder, folder)
+      const originIndex = tree[username].findIndex((folder: IFolder) => path.resolve(folder.path) === origin)
+      const destIndex = tree[username].findIndex((folder: IFolder) => path.resolve(folder.path) === dest)
+      fs.cpSync(origin, dest, { recursive: true })
+      tree[username][destIndex].files.push(tree[username][originIndex].files)
     }
 
     fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
@@ -206,44 +224,10 @@ export const acceptedCommands = {
   },
 
   /**
-  * Copia um arquivo ou diretório para o local
+  * Move um arquivo/diretório para um outro lugar informado
   * @param {IState} state
-  * Estado da aplicação contendo o usuário logado e um array contendo o nome do usuário
+  *  Estado da aplicação com um array que contém o o arquivo ou pasta a ser movido
   */
-  copiar: (state: IState): number => {
-    const [file, folder] = state.arguments
-
-    if (!validatePath(state) || !validatePath(state, folder)) return 1
-
-    const name = path.basename(file)
-    const origin = path.resolve(state.currentFolder, file)
-
-    if (path.extname(file)) {
-      const destFile = path.resolve(state.currentFolder, folder, file)
-
-      fs.copyFileSync(origin, destFile)
-      const folderIndex = tree[state.user.username].findIndex((folder: IFolder) => path.resolve(folder.path) === destFile)
-      const data = fs.readFileSync(origin, 'utf-8')
-      const copiedFile = {
-        id: randomUUID(),
-        name,
-        created_at: Date.now(),
-        data
-      }
-      tree[state.user.username][folderIndex].files.push(copiedFile)
-    } else {
-      const dest = path.resolve(state.currentFolder, folder)
-      const originIndex = tree[state.user.username].findIndex((folder: IFolder) => path.resolve(folder.path) === origin)
-      const destIndex = tree[state.user.username].findIndex((folder: IFolder) => path.resolve(folder.path) === dest)
-      fs.cpSync(origin, dest, { recursive: true })
-      tree[state.user.username][destIndex].files.push(tree[state.user.username][originIndex].files)
-    }
-
-    fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
-
-    return 0
-  },
-
   mover: (state: IState): number => {
     if (!state.arguments[0]) {
       console.log('Forneça uma origem válida')
@@ -255,29 +239,47 @@ export const acceptedCommands = {
       return 1
     }
 
-    if (!path.extname(state.arguments[1])) {
-      console.log('Destino não pode ser um arquivo')
-    }
-
     if (!validatePath(state) || !validatePath(state, state.arguments[1])) return 1
 
-    const username = state.user.username
-    const folderBase = path.basename(state.arguments[1])
-    const origin = path.resolve(state.currentFolder, state.arguments[0])
     const destination = path.resolve(state.currentFolder, state.arguments[1])
 
-    if (!path.extname(state.arguments[0])) { // Se for arquivo
-      fs.renameSync(origin, destination)
-      const fileName = path.basename(state.arguments[0])
-      const index = tree[username].findIndex((folder: IFolder) =>
-        path.resolve(folder.path) === path.dirname(origin)
-      )
-      tree[username][index].files = tree[username][index]?.files?.filter((file: IFile) => file.name !== fileName)
-      return 0
+    if (fs.lstatSync(destination).isFile()) {
+      console.log('Destino não pode ser um arquivo')
+      return 1
     }
 
-    fs.renameSync(origin, path.resolve(destination, folderBase))
-    tree[username] = tree[username].filter((folder: IFolder) => path.resolve(folder.path) !== origin)
+    const username = state.user.username
+    const origin = path.resolve(state.currentFolder, state.arguments[0])
+
+    if (fs.lstatSync(origin).isFile()) { // Se a origem for um arquivo
+      const fileName = path.basename(state.arguments[0])
+      const fileDest = path.resolve(destination, fileName)
+      fs.renameSync(origin, fileDest)
+      const folderIndex = tree[username].findIndex((folder: IFolder) =>
+        path.resolve(folder.path) === path.dirname(origin)
+      )
+      const element = tree[username][folderIndex].files.find((file: IFile) => file.name === fileName)
+      const newPathIndex = tree[username].findIndex((folder: IFolder) => path.resolve(folder.path) === destination)
+
+      tree[username][newPathIndex].files.push(element)
+      tree[username][folderIndex].files = tree[username][folderIndex].files.filter((file: IFile) => file.name !== fileName)
+    } else {
+      const originBase = path.basename(path.resolve(state.currentFolder, state.arguments[0]))
+      fs.renameSync(origin, path.resolve(destination, originBase))
+      const folderIndex = tree[username].findIndex((folder: IFolder) =>
+        path.resolve(folder.path) === origin
+      )
+      const pathInTree = path.resolve(destination, originBase).replace(process.cwd(), '').replaceAll(/\\/g, '/').replace('/', '')
+      const pathInTreeIndex = tree[username].findIndex(folder => folder.path === pathInTree)
+
+      if (pathInTreeIndex >= 0) {
+        tree[username][pathInTreeIndex].files = tree[username][folderIndex].files
+        tree[username] = tree[username].filter((folder: IFolder) => folder.path !== tree[username][folderIndex].path)
+      }
+
+      tree[username][folderIndex].path = path.resolve(destination, originBase).replace(process.cwd(), '').replaceAll(/\\/g, '/').replace('/', '')
+    }
+
     fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
 
     return 0
@@ -319,6 +321,33 @@ export const acceptedCommands = {
   },
 
   /**
+  * Delete a pasta ou arquivo no caminho informado
+  * @param {IState} state
+  * Estado da aplicação contendo um array com o caminho
+  */
+  apagar: (state: IState): number => {
+    if (!validatePath(state)) return 1
+
+    const username = state.user.username
+    const baseName = path.basename(state.arguments[0])
+    const caminho = path.resolve(state.currentFolder, state.arguments[0])
+
+    if (fs.lstatSync(caminho).isFile()) { // Se for arquivo
+      const index = tree[username].findIndex((folder: IFolder) =>
+        path.resolve(folder.path) === path.dirname(caminho)
+      )
+      tree[username][index].files = tree[username][index]?.files?.filter((file: IFile) => file.name !== baseName)
+    } else {
+      tree[username] = tree[username].filter((folder: IFolder) => path.resolve(folder.path) !== caminho)
+    }
+    fs.rmSync(caminho, { recursive: true })
+
+    fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
+
+    return 0
+  },
+
+  /**
  * Cria uma nova pasta no caminho informado
  * @param {IState} state
  * Estado da aplicação contendo um array com o caminho
@@ -326,15 +355,27 @@ export const acceptedCommands = {
   cdir: (state: IState): number => {
     if (!validatePath(state)) return 1
 
-    if (specialCharacters.test(state.arguments[0])) {
+    const folder = state.arguments[0]
+
+    if (!folder) {
+      console.log('Forneça um nome válido!')
+      return 1
+    }
+
+    if (specialCharacters.test(folder)) {
       console.log('Proibido caracteres especiais')
       return 1
     }
 
-    const folder = state.arguments[0]
     const { username } = state.user
 
     const fullPath = path.resolve(state.currentFolder, folder)
+
+    if (tree[username].some((dir: IFolder) => path.resolve(dir.path) === fullPath)) {
+      console.log('Pasta já existe')
+      return 1
+    }
+
     fs.mkdirSync(fullPath, { recursive: true })
 
     const newFolder: IFolder = {
@@ -350,19 +391,30 @@ export const acceptedCommands = {
     return 0
   },
   /**
- * Deleta a pasta vazia no caminho informado
+ * Deleta uma pasta vazia
  * @param {IState} state
  * Estado da aplicação contendo um array com o caminho
   */
   rdir: (state: IState): number => {
     if (!validatePath(state)) return 1
-    const directory = path.resolve(state.currentFolder, state.arguments[0])
+
+    const { currentFolder, user: { username } } = state
+
+    const directory = path.resolve(currentFolder, state.arguments[0])
     const directoryContent = fs.readdirSync(directory)
 
-    if (directoryContent.length === 0) return 1
+    if (directory === path.resolve('home', username)) {
+      console.log('Não é possível deletar a sua pasta')
+      return 1
+    }
 
-    fs.rmdirSync(state.arguments[0])
-    tree[state.user.username] = tree[state.user.username].filter((folder: IFolder) => path.resolve(folder.path) === directory)
+    if (directoryContent.length > 0) {
+      console.log('A pasta não está vazia')
+      return 1
+    }
+
+    fs.rmdirSync(directory)
+    tree[username] = tree[username].filter((folder: IFolder) => path.resolve(folder.path) !== directory)
     fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
 
     return 0
@@ -384,6 +436,8 @@ export const acceptedCommands = {
     }
 
     state.currentFolder = resolvedNewPath
+
+    return 0
   },
 
   /**
@@ -393,6 +447,11 @@ export const acceptedCommands = {
   */
   renomear: (state: IState): number => {
     const { currentFolder, arguments: [oldName, newName], user } = state
+
+    if (!oldName || !newName) {
+      console.log('Forneça caminhos válidos')
+      return 1
+    }
 
     if (!validatePath(state)) return 1
 
@@ -407,9 +466,7 @@ export const acceptedCommands = {
     const oldBaseName = path.basename(oldPath)
     const baseName = path.basename(newPath)
 
-    fs.renameSync(oldPath, newPath)
-
-    if (path.extname(oldName)) { // Se for arquivo
+    if (fs.lstatSync(oldName).isFile()) { // Se for arquivo
       const index = tree[user.username].findIndex((folder: IFolder) =>
         path.resolve(folder.path) === path.dirname(newPath)
       )
@@ -421,6 +478,8 @@ export const acceptedCommands = {
       )
       tree[user.username][index].path = tree[user.username][index].path.replace(oldBaseName, baseName)
     }
+
+    fs.renameSync(oldPath, newPath)
 
     fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
 
@@ -531,3 +590,5 @@ export const acceptedCommands = {
   sair: handleAuthentication,
   quit: () => { }
 }
+
+export { acceptedCommands }

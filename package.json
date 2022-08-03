@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsnd -r tsconfig-paths/register --transpile-only --ignore-watch src/config src/index.ts",
-    "test": "jest --silent",
+    "test": "jest --silent --runInBand",
     "build": "babel src --extensions \".js,.ts\" --out-dir dist --copy-files --no-copy-ignored",
     "compile": "npm run build && npx pkg -compress GZip -t node16-macos,node16-linux,node16-win --output brsh dist/index.js"
   },
