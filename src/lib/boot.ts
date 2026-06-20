@@ -1,53 +1,52 @@
 import fs from 'fs'
+import path from 'path'
 import { IFile, IFolder } from 'types/Files'
 
 import users from '@config/users.json'
-import tree from '@config/tree.json'
+import treeRaw from '@config/tree.json'
+
+const tree: Record<string, IFolder[]> = treeRaw as any
 
 function boot (): void {
   try {
     users.forEach(user => {
-      if (!fs.existsSync(`home/${user.username}`)) fs.mkdirSync(`home/${user.username}`, { recursive: true })
+      const userHomeDir = path.resolve('home', user.username)
+      if (!fs.existsSync(userHomeDir)) {
+        fs.mkdirSync(userHomeDir, { recursive: true })
+      }
 
-      if (tree[user.username]?.length === 0) return
+      if (!tree[user.username] || tree[user.username].length === 0) return
 
-      tree[user.username]?.forEach((folder: IFolder) => {
-        if (Object.keys(folder).length !== 0 && !fs.existsSync(`${folder.path}`)) {
-          fs.mkdirSync(`${folder.path}`, { recursive: true })
+      tree[user.username].forEach((folder: IFolder) => {
+        const folderPath = path.resolve(folder.path)
+        
+        if (Object.keys(folder).length !== 0 && !fs.existsSync(folderPath)) {
+          fs.mkdirSync(folderPath, { recursive: true })
         }
-        folder.files?.forEach(file => fs.writeFileSync(`${folder.path}/${file.name}`, file.data))
+        
+        folder.files?.forEach((file: IFile) => {
+          const filePath = path.join(folderPath, file.name)
+          fs.writeFileSync(filePath, file.data)
+        })
       })
     })
 
     for (const user in tree) {
-      tree[user].forEach((folder:IFolder) => {
-        folder.files.sort((atual:IFile, prox:IFile) => {
-          if (atual.name > prox.name) {
-            return 1
-          }
-          if (atual.name < prox.name) {
-            return -1
-          }
-          // a must be equal to b
-          return 0
-        })
+      tree[user].forEach((folder: IFolder) => {
+        folder.files.sort((atual: IFile, prox: IFile) => atual.name.localeCompare(prox.name))
       })
 
-      tree[user].sort((atual:IFolder, prox:IFolder) => {
-        if (atual.path > prox.path) {
-          return 1
-        }
-        if (atual.path < prox.path) {
-          return -1
-        }
-        // a must be equal to b
-        return 0
-      })
+      tree[user].sort((atual: IFolder, prox: IFolder) => atual.path.localeCompare(prox.path))
     }
 
-    fs.writeFileSync('./src/config/tree.json', JSON.stringify(tree, null, 4))
+    const treeConfigPath = path.resolve('src', 'config', 'tree.json')
+    fs.writeFileSync(treeConfigPath, JSON.stringify(tree, null, 4))
   } catch (error) {
-    console.log(error.message || error)
+    if (error instanceof Error) {
+      console.error(error.message)
+    } else {
+      console.error(String(error))
+    }
   }
 }
 
