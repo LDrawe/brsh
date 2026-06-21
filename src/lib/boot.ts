@@ -1,52 +1,66 @@
-import fs from 'fs'
-import path from 'path'
-import { IFile, IFolder } from 'types/Files'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { IVfsNode } from 'types/Files'
 
 import users from '@config/users.json'
 import treeRaw from '@config/tree.json'
 
-const tree: Record<string, IFolder[]> = treeRaw as any
+const tree: Record<string, IVfsNode> = treeRaw as any
 
-function boot (): void {
+// Recursively maps our JSON inode tree to the physical OS file system.
+// Ensures state parity before the REPL loop binds to the terminal.
+function syncPhysicalDisk(node: IVfsNode, basePath: string) {
+
+  const currentPath = path.join(basePath, node.name)
+
+  if (node.type !== 'folder') {
+
+    if (!fs.existsSync(currentPath)) fs.writeFileSync(currentPath, node.data || '')
+
+    return
+
+  }
+
+  if (!fs.existsSync(currentPath)) fs.mkdirSync(currentPath, { recursive: true })
+
+  if (!node.children) return
+
+  node.children.sort((a, b) => a.name.localeCompare(b.name))
+
+  node.children.forEach(child => syncPhysicalDisk(child, currentPath))
+
+}
+
+function boot(): void {
   try {
+
     users.forEach(user => {
-      const userHomeDir = path.resolve('home', user.username)
-      if (!fs.existsSync(userHomeDir)) {
-        fs.mkdirSync(userHomeDir, { recursive: true })
+
+      const userHomeDir = path.resolve('home')
+
+      // Bootstraps the root node for new users traversing the system for the first time
+      if (!tree[user.username]) {
+        tree[user.username] = {
+          id: crypto.randomUUID(),
+          name: user.username,
+          type: 'folder',
+          created_at: Date.now(),
+          children: []
+        }
       }
 
-      if (!tree[user.username] || tree[user.username].length === 0) return
+      syncPhysicalDisk(tree[user.username], userHomeDir)
 
-      tree[user.username].forEach((folder: IFolder) => {
-        const folderPath = path.resolve(folder.path)
-        
-        if (Object.keys(folder).length !== 0 && !fs.existsSync(folderPath)) {
-          fs.mkdirSync(folderPath, { recursive: true })
-        }
-        
-        folder.files?.forEach((file: IFile) => {
-          const filePath = path.join(folderPath, file.name)
-          fs.writeFileSync(filePath, file.data)
-        })
-      })
     })
-
-    for (const user in tree) {
-      tree[user].forEach((folder: IFolder) => {
-        folder.files.sort((atual: IFile, prox: IFile) => atual.name.localeCompare(prox.name))
-      })
-
-      tree[user].sort((atual: IFolder, prox: IFolder) => atual.path.localeCompare(prox.path))
-    }
 
     const treeConfigPath = path.resolve('src', 'config', 'tree.json')
     fs.writeFileSync(treeConfigPath, JSON.stringify(tree, null, 4))
+
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message)
-    } else {
-      console.error(String(error))
-    }
+
+    if (error instanceof Error) console.error(error.message)
+
   }
 }
 

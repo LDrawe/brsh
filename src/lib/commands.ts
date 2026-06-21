@@ -1,188 +1,172 @@
-import fs from 'fs'
-import path from 'path'
-import { randomUUID } from 'crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
 import { IState } from 'types/Aplication'
-import { IFolder, IFile } from 'types/Files'
+import { IVfsNode } from 'types/Files'
+import { resolveVfsNode } from '@utils/vfs'
+import { handleAuthentication } from './authentication'
 
 import users from '@config/users.json'
 import treeRaw from '@config/tree.json'
-import { handleAuthentication } from './authentication'
 
-const tree: Record<string, IFolder[]> = treeRaw as any
-
+const tree: Record<string, IVfsNode> = treeRaw as any
 const treeConfigPath = path.resolve('src', 'config', 'tree.json')
 const usersConfigPath = path.resolve('src', 'config', 'users.json')
 const saveTree = () => fs.writeFileSync(treeConfigPath, JSON.stringify(tree, null, 4))
 
 const specialCharacters = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
 
-/**
- * Previne exploits de Directory Traversal
- */
+// Guards against path traversal vulnerabilities (e.g., escaping the user sandbox)
 function validatePath(state: IState): boolean {
   const arg = state.arguments[0]
-  if (arg && arg.includes('..')) {
-    console.log('Acesso negado: Caminhos relativos não são permitidos.')
-    return false
-  }
+
+  if (arg && arg.includes('..')) return false
+
   return true
 }
 
 const acceptedCommands: Record<string, (state: IState) => any> = {
   sair: (state: IState) => handleAuthentication(state),
   quit: () => {},
-  
+
   help: () => {
-    console.log('Comandos disponíveis: cdir, carq, apagar, deletarusr, sair, quit')
+    console.log('Comandos disponíveis: cdir, carq, apagar, listar, deletarusr, sair, quit')
     return 0
   },
 
   cdir: (state: IState): number => {
+
     if (!validatePath(state)) return 1
 
-    const folder = state.arguments[0]
-    if (!folder) {
-      console.log('Forneça um nome válido!')
-      return 1
-    }
+    const folderName = state.arguments[0]
 
-    if (specialCharacters.test(folder)) {
-      console.log('Proibido o uso de caracteres especiais')
-      return 1
-    }
+    if (!folderName || specialCharacters.test(folderName)) return 1
 
     const { username } = state.user!
-    const fullPath = path.resolve(state.currentFolder, folder)
+    const userHomePath = path.resolve('home', username)
+    
+    // Translates physical path into a memory pointer. Prevents desync tracking.
+    const currentFolderNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
 
-    if (!tree[username]) tree[username] = []
+    if (!currentFolderNode || currentFolderNode.type !== 'folder') return 1
 
-    if (tree[username].some((dir: IFolder) => path.resolve(dir.path) === fullPath)) {
-      console.log('Pasta já existe')
-      return 1
-    }
+    if (currentFolderNode.children!.some(c => c.name === folderName)) return 1
 
+    const fullPath = path.resolve(state.currentFolder, folderName)
     fs.mkdirSync(fullPath, { recursive: true })
 
-    const newFolder: IFolder = {
-      id: randomUUID(),
+    currentFolderNode.children!.push({
+      id: crypto.randomUUID(),
+      name: folderName,
+      type: 'folder',
       created_at: Date.now(),
-      path: path.relative(process.cwd(), fullPath).split(path.sep).join('/'),
-      files: []
-    }
+      children: []
+    })
 
-    tree[username].push(newFolder)
     saveTree()
     return 0
+
   },
 
   carq: (state: IState): number => {
+
     if (!validatePath(state)) return 1
 
     const fileName = state.arguments[0]
-    if (!fileName) {
-      console.log('Forneça o nome do arquivo!')
-      return 1
-    }
 
-    if (specialCharacters.test(fileName)) {
-      console.log('Proibido o uso de caracteres especiais')
-      return 1
-    }
+    if (!fileName || specialCharacters.test(fileName)) return 1
 
     const { username } = state.user!
-    const currentRelativeFolder = path.relative(process.cwd(), state.currentFolder).split(path.sep).join('/')
-    
-    if (!tree[username]) tree[username] = []
+    const userHomePath = path.resolve('home', username)
 
-    const currentFolderNode = tree[username].find((dir: IFolder) => dir.path === currentRelativeFolder)
+    const currentFolderNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
 
-    if (!currentFolderNode) {
-      console.log('Erro: Diretório não encontrado.')
-      return 1
-    }
+    if (!currentFolderNode || currentFolderNode.type !== 'folder') return 1
 
-    if (currentFolderNode.files.some((file: IFile) => file.name === fileName)) {
-      console.log('Arquivo já existe')
-      return 1
-    }
-
-    const newFile: IFile = {
-      id: randomUUID(),
-      name: fileName,
-      data: '',
-      created_at: Date.now()
-    }
+    if (currentFolderNode.children!.some(c => c.name === fileName)) return 1
 
     const fullPath = path.resolve(state.currentFolder, fileName)
     fs.writeFileSync(fullPath, '')
 
-    currentFolderNode.files.push(newFile)
+    currentFolderNode.children!.push({
+      id: crypto.randomUUID(),
+      name: fileName,
+      type: 'file',
+      data: '',
+      created_at: Date.now()
+    })
+
     saveTree()
     return 0
+
   },
 
   apagar: (state: IState): number => {
+
     if (!validatePath(state)) return 1
 
     const targetName = state.arguments[0]
-    if (!targetName) {
-      console.log('Forneça o nome do arquivo ou pasta!')
-      return 1
-    }
+
+    if (!targetName) return 1
 
     const { username } = state.user!
     const fullPath = path.resolve(state.currentFolder, targetName)
 
-    if (!fs.existsSync(fullPath)) {
-      console.log('Não encontrado')
-      return 1
-    }
+    if (!fs.existsSync(fullPath)) return 1
 
-    const stats = fs.statSync(fullPath)
-    if (!tree[username]) tree[username] = []
+    const userHomePath = path.resolve('home', username)
+    const parentFolderNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
 
-    if (stats.isDirectory()) {
-      const relativePath = path.relative(process.cwd(), fullPath).split(path.sep).join('/')
-      tree[username] = tree[username].filter((dir: IFolder) => !dir.path.startsWith(relativePath))
-      fs.rmSync(fullPath, { recursive: true, force: true })
-    } else {
-      const currentRelativeFolder = path.relative(process.cwd(), state.currentFolder).split(path.sep).join('/')
-      const folderNode = tree[username].find((dir: IFolder) => dir.path === currentRelativeFolder)
-      if (folderNode) {
-        folderNode.files = folderNode.files.filter((file: IFile) => file.name !== targetName)
-      }
-      fs.rmSync(fullPath, { force: true })
-    }
+    if (!parentFolderNode || parentFolderNode.type !== 'folder') return 1
+
+    parentFolderNode.children = parentFolderNode.children!.filter(child => child.name !== targetName)
+
+    fs.rmSync(fullPath, { recursive: true, force: true })
 
     saveTree()
     return 0
+
+  },
+
+  listar: (state: IState): number => {
+
+    const { username } = state.user!
+    const userHomePath = path.resolve('home', username)
+
+    const currentFolderNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
+
+    if (!currentFolderNode || !currentFolderNode.children) return 1
+
+    // Zero I/O listing. Pulls directly from memory acting exactly like an inode table cache.
+    currentFolderNode.children.forEach(item => {
+      console.log(item.type === 'folder' ? '📁' : '🗄️', item.name)
+    })
+
+    return 0
+
   },
 
   deletarusr: (state: IState): number => {
-    if (state.user!.privilegeLevel < 1) {
-      console.log('Sem permissão')
-      return 1
-    }
+
+    if (state.user!.privilegeLevel < 1) return 1
 
     const username = state.arguments[0]
-    if (!username || username === 'root' || users.length === 1) {
-      console.log('Ação inválida')
-      return 1
-    }
+
+    if (!username || username === 'root' || users.length === 1) return 1
 
     const targetHome = path.resolve('home', username)
     const filteredUsers = users.filter(user => user.username !== username)
-    
+
     delete tree[username]
+    
     fs.writeFileSync(usersConfigPath, JSON.stringify(filteredUsers, null, 4))
     saveTree()
 
-    if (fs.existsSync(targetHome)) {
-      fs.rmSync(targetHome, { recursive: true, force: true })
-    }
+    if (fs.existsSync(targetHome)) fs.rmSync(targetHome, { recursive: true, force: true })
 
     console.log(`Usuário ${username} removido.`)
     return 0
+
   }
 }
 
