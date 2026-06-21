@@ -1,9 +1,11 @@
-import path from 'path'
+import path from 'node:path'
+import { describe, it } from 'node:test'
+import assert from 'node:assert'
 import { IState } from 'types/Aplication'
 import { validatePath } from '@utils/validator'
 
 describe('Validates the paths to the user directory only', () => {
-  const state:IState = {
+  const state: IState = {
     currentFolder: path.resolve('home', 'eduardo'),
     arguments: [],
     command: '',
@@ -16,10 +18,11 @@ describe('Validates the paths to the user directory only', () => {
 
   it('Should be able to reject provided path', () => {
     const pathBelongToUser = validatePath(state, '../root')
-    expect(pathBelongToUser).toBe(false)
+    assert.strictEqual(pathBelongToUser, false)
   })
+
   it('Should be able to acept provided path', () => {
     const pathBelongToUser = validatePath(state)
-    expect(pathBelongToUser).toBe(true)
+    assert.strictEqual(pathBelongToUser, true)
   })
 })

@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "ES2022",
     "lib": [
-      "ES2021"
+      "ES2022"
     ],
     "module": "commonjs",
     "outDir": "./dist",
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
       "@config/*": [
         "./src/config/*"

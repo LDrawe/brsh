@@ -1,16 +1,24 @@
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'node:crypto'
+import { describe, it, mock } from 'node:test'
+import assert from 'node:assert'
 
-const prompt = jest.fn((question: string) => {
+const prompt = mock.fn((question: string) => {
   console.log(question)
   return randomBytes(5).toString('hex')
 })
 
-const logMock = jest.spyOn(console, 'log').mockImplementation()
+mock.method(console, 'log', () => {})
 
-it('Should be able to ask for input and return a string', () => {
-  const input = prompt('Question')
-  expect(prompt).toHaveBeenCalled()
-  expect(console.log).toHaveBeenCalled()
-  expect(logMock).toHaveBeenCalled()
-  expect(input).toBeTruthy()
+describe('Prompt', () => {
+  it('Should be able to ask for input and return a string', () => {
+    const input = prompt('Question')
+
+    assert.strictEqual(prompt.mock.calls.length > 0, true)
+    
+    const logMockCalls = (console.log as any).mock.calls.length
+
+    assert.strictEqual(logMockCalls > 0, true)
+
+    assert.ok(input)
+  })
 })

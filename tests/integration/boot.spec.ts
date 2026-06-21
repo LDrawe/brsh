@@ -1,21 +1,27 @@
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
+import { describe, it } from 'node:test'
+import assert from 'node:assert'
 import { boot } from '@lib/boot'
 import { IFolder } from 'types/Files'
 
-import tree from '@config/tree.json'
+import treeRaw from '@config/tree.json'
 
-function checkFolders (folder:IFolder) {
+const tree: Record<string, IFolder[]> = treeRaw as any
+
+function checkFolders (folder: IFolder) {
   const currentPath = path.resolve(folder.path)
   const folderExists = fs.existsSync(currentPath)
 
-  expect(folderExists).toBe(true)
+  assert.strictEqual(folderExists, true)
+
+  if (!folder.files) return
 
   folder.files.forEach(file => {
     const filePath = path.resolve(currentPath, file.name)
     const fileExists = fs.existsSync(filePath)
 
-    expect(fileExists).toBe(true)
+    assert.strictEqual(fileExists, true)
   })
 }
 
