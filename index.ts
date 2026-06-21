@@ -1,12 +1,12 @@
 import path from 'node:path'
-import { boot } from '@lib/boot'
-import { acceptedCommands } from '@lib/commands'
-import { zsh } from '@utils/prompt'
+import { boot } from '@core/boot'
+import { acceptedCommands } from '@cli/commands'
+import { zsh } from '@cli/prompt'
 import { TerminalContext } from 'types/Aplication'
 
 boot()
 
-let cli = ''
+let cli: string | null = ''
 
 const state: TerminalContext = {
   command: '',
@@ -21,10 +21,10 @@ do {
 
   cli = zsh(state.user!.username, state.currentFolder)
 
-  if (cli == null) process.exit()
+  if (cli === null) process.exit(0)
 
   state.arguments = cli.trim().split(' ')
-  state.command = state.arguments.shift() || ''
+  state.command = state.arguments.shift()?.toLowerCase() || ''
 
   if (!state.command) continue
 
@@ -34,13 +34,12 @@ do {
 
     if (executeCommand)
       executeCommand(state)
-     else 
+    else 
       console.log('Comando não reconhecido. Digite "help" para obter uma lista.')
-    
 
   } catch (error) {
     if (error instanceof Error) console.log(error.message)
     else console.log(String(error))
   }
 
-} while (cli !== 'quit')
+} while (state.command !== 'quit')

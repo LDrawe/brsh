@@ -1,8 +1,8 @@
 {
-  "name": "trabalho-so",
+  "name": "brsh",
   "version": "1.0.0",
-  "description": "Uma simples CLI para tratar sistemas de arquivos",
-  "main": "dist/index.js",
+  "description": "An advanced Virtual File System (VFS) and CLI emulator built with Node.js, featuring an in-memory nested inode tree, atomic storage synchronization, and strict path sandboxing",
+  "main": "index.ts",
   "scripts": {
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
@@ -13,9 +13,9 @@
     "compile:deno": "deno compile --allow-read --allow-write --output brsh src/index.ts"
   },
   "keywords": [],
-  "author": "Eduardo Portilho <eduardomportilho@hotmail.com>",
+  "author": "Eduardo Portilho <eduardomportilho@gmail.com>",
   "license": "MIT",
-  "private": "true",
+  "private": true,
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
     "@types/cli-color": "^2.0.2",

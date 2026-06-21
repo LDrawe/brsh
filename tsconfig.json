@@ -11,8 +11,8 @@
       "@config/*": [
         "./src/config/*"
       ],
-      "@lib/*": [
-        "./src/lib/*"
+      "@core/*": [
+        "./src/core/*"
       ],
       "@utils/*": [
         "./src/utils/*"
