@@ -1,48 +1,65 @@
-import path from 'path'
+import path from 'node:path'
 import { compareSync } from 'bcryptjs'
 import { prompt } from '@utils/prompt'
-import { IState, IUser } from 'types/Aplication'
+import { TerminalContext, IUser } from 'types/Aplication'
 
-import users from '@config/users.json'
+import usersData from '@config/users.json'
 
-function consultUser (appState: IState): IUser| null {
-  const matchedUser = users.find(user =>
-    user.username === appState.arguments[0] && compareSync(appState.arguments[1], user.password)
-  )
-
-  if (!matchedUser) {
-    return null
-  }
-
-  const { password, ...user } = matchedUser
-
-  appState.user = user
-  appState.currentFolder = path.resolve('home', user.username)
-
-  return user
+interface IUserAuth extends IUser {
+  password: string;
 }
 
-function handleAuthentication (appState: IState): IUser {
-  let user: IUser | null
+// Forced cast bypasses incorrect JSON inference if local files get corrupted during dev
+const users = usersData as unknown as IUserAuth[]
+
+function consultUser (appState: TerminalContext): IUser | null {
+
+  const [providedUsername, providedPassword] = appState.arguments
+
+  const matchedUser = users.find(u => u.username === providedUsername && compareSync(providedPassword, u.password))
+
+  if (!matchedUser) return null
+
+  // Memory safety: strip password hash before loading user into the session context
+  const { password, ...userSession } = matchedUser
+
+  appState.user = userSession
+  appState.currentFolder = path.resolve('home', userSession.username)
+
+  return userSession
+
+}
+
+function handleAuthentication (appState: TerminalContext): IUser {
+
+  let user: IUser | null = null
+  
   console.clear()
 
   do {
+
     const username = prompt('Usuário: ')
+
+    // Graceful exit on EOF (Ctrl+D) to prevent infinite loops with null inputs
+    if (username === null) process.exit(0)
+
     const password = prompt('Senha: ', { echo: '*' })
 
-    user = consultUser({ ...appState, arguments: [username, password] })
-    // user = consultUser({ ...appState, arguments: ['eduardo', '123456'] })
+    if (password === null) process.exit(0)
 
-    if (!user) {
-      console.log('Usuário ou senha incorretos')
-    }
+    user = consultUser({ ...appState, arguments: [username, password] })
+
+    if (!user) console.log('Usuário ou senha incorretos')
+    
   } while (!user)
 
   appState.user = user
   appState.currentFolder = path.resolve('home', appState.user.username)
+  
   console.clear()
 
   return user
+
 }
 
 export { handleAuthentication, consultUser }

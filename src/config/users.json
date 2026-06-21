@@ -1,16 +1,14 @@
-{
-    "root": {
-        "id": "f3e741ed-f76a-4c28-8dd4-3e54e91bc9b1",
-        "name": "root",
-        "type": "folder",
-        "created_at": 1657054053,
-        "children": []
+[
+    {
+        "id": "7f8ce84c-7ac8-49ba-86de-638f76223d0a",
+        "username": "root",
+        "password": "$2a$10$Hfvj4FnUBm6Bn63OIYXN0OrP91BI8V8J91DprHFOUjvbMJeSJgoQm",
+        "privilegeLevel": 1
     },
-    "eduardo": {
-        "id": "e5d4f490-e95a-4092-b2fe-005d6bfa0765",
-        "name": "eduardo",
-        "type": "folder",
-        "created_at": 1658411266782,
-        "children": []
+    {
+        "id": "be22eb74-48eb-4365-a5da-f36cd8fc2f19",
+        "username": "eduardo",
+        "password": "$2a$10$Kqg9ioj6wM3Q6UsEPNXYsukE41gvJb2/OrlKSOZkhYGFZwD5z5RtG",
+        "privilegeLevel": 0
     }
-}
+]
