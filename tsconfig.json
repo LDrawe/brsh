@@ -4,8 +4,8 @@
     "lib": [
       "ES2022"
     ],
+    "types": ["node"],
     "module": "commonjs",
-    "outDir": "./dist",
     "rootDir": ".",
     "paths": {
       "@config/*": [
@@ -14,8 +14,8 @@
       "@core/*": [
         "./src/core/*"
       ],
-      "@utils/*": [
-        "./src/utils/*"
+      "@cli/*": [
+        "./src/cli/*"
       ],
       "types/*": [
         "./src/types/*"

@@ -1,24 +1,26 @@
-import { randomBytes } from 'node:crypto'
-import { describe, it, mock } from 'node:test'
+import { describe, it } from 'node:test'
 import assert from 'node:assert'
-
-const prompt = mock.fn((question: string) => {
-  console.log(question)
-  return randomBytes(5).toString('hex')
-})
-
-mock.method(console, 'log', () => {})
+import { randomBytes } from 'node:crypto'
 
 describe('Prompt', () => {
   it('Should be able to ask for input and return a string', () => {
-    const input = prompt('Question')
+    let logCalls = 0
+    const originalLog = console.log
 
-    assert.strictEqual(prompt.mock.calls.length > 0, true)
-    
-    const logMockCalls = (console.log as any).mock.calls.length
+    // Native Mocking to ensure cross-runtime compatibility (Node/Bun/Deno)
+    console.log = (msg: string) => { logCalls++ }
 
-    assert.strictEqual(logMockCalls > 0, true)
+    const mockPrompt = (question: string) => {
+      console.log(question)
+      return randomBytes(5).toString('hex')
+    }
 
+    const input = mockPrompt('Question')
+
+    assert.strictEqual(logCalls > 0, true)
     assert.ok(input)
+
+    // Restore original console
+    console.log = originalLog
   })
 })
