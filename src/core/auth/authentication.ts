@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { compareSync } from 'bcryptjs'
-import { prompt } from '@utils/prompt'
+import { prompt } from '../../cli/prompt'
 import { TerminalContext, IUser } from 'types/Aplication'
 
 import usersData from '@config/users.json'

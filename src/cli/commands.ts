@@ -3,72 +3,54 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { TerminalContext, IUser } from 'types/Aplication'
 import { IVfsNode } from 'types/Files'
-import { resolveVfsNode } from '@utils/vfs'
-import { handleAuthentication } from './authentication'
+import { handleAuthentication } from '@core/auth/authentication'
+
+// Core imports replacing local functions
+import { writeAtomically } from '@core/vfs/io'
+import { isNameSafe, isPathSafe } from '@core/vfs/security'
+import { resolveVfsNode } from '@core/vfs/pointer'
 
 import usersData from '@config/users.json'
 import treeRaw from '@config/tree.json'
 
-// Forced cast ensures array methods like .length and .filter won't trigger TS panics
 const users = usersData as unknown as IUser[]
 const tree: Record<string, IVfsNode> = treeRaw as any
 
 const treeConfigPath = path.resolve('src', 'config', 'tree.json')
 const usersConfigPath = path.resolve('src', 'config', 'users.json')
 
-const saveTree = () => fs.writeFileSync(treeConfigPath, JSON.stringify(tree, null, 4))
-
-const specialCharacters = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/
-
-// Guards against sandbox escaping via directory traversal attacks
-function validatePath(state: TerminalContext): boolean {
-
-  const arg = state.arguments[0]
-
-  if (arg && arg.includes('..')) return false
-
-  return true
-
-}
+// Leverages the new atomic save
+const saveTree = () => writeAtomically(treeConfigPath, tree)
 
 const acceptedCommands: Record<string, (state: TerminalContext) => any> = {
 
   sair: (state: TerminalContext) => handleAuthentication(state),
+  
+  quit: () => process.exit(0),
 
-  quit: () => { },
+  help: (state: TerminalContext): number => {
 
-  help: (): number => {
-
-    // Prints the complete manual using native multi-line template literals
     console.log(`
- CDIR <nome_do_diretório> – Cria um novo diretório
- CARQ <nome_do_arquivo> – Cria um novo arquivo
- LISTARATR <nome_do_arq_ou_dir> – Lista os atributos de um determinado arquivo ou diretório
- RDIR <nome_do_dir> – Apaga um diretório vazio
- APAGAR <nome> – Apaga um arquivo ou um diretório com arquivos
- LISTAR – Lista o conteúdo do diretório atual, que deve estar em ordem alfabética
- LISTARINV – Lista o conteúdo do diretório em ordem decrescente
- LISTARTUDO – Lista o conteúdo do diretório e se houver, também listará o conteúdo dos subdiretórios
- MUDAR <end_destino> – Altera o estado atual de uma pasta para outra qualquer
- ATUAL – Mostra o nome do diretório atual
- COPIAR <origem> <destino> – Copia um arquivo/diretório para um outro lugar informado
- RENOMEAR <nome_atual> <nome_final> – Renomeia um arquivo ou diretório
- MOVER <origem> <destino> – Move um arquivo/diretório para um outro lugar informado
- BUSCAR <nome_arquivo> <dir_de_busca> – Busca um arquivo informado na hierarquia de diretório
- ALTERARUSR <login_usuario> <senha> - Fará o login do novo usuário
- DELETARUSR <login_usuario> - Deleta um usuário do sistema
- SAIR - Faz logout do usuário atual
- CLEAR - Limpa a tela
- QUIT - Encerra o programa
+      CDIR <nome_do_diretório> – Cria um novo diretório
+      CARQ <nome_do_arquivo> – Cria um novo arquivo
+      LISTARATR <nome_do_arq_ou_dir> – Lista os atributos de um arquivo ou diretório
+      RDIR <nome_do_dir> – Apaga um diretório vazio
+      APAGAR <nome> – Apaga um arquivo ou um diretório com arquivos
+      LISTAR – Lista o conteúdo do diretório atual, em ordem alfabética
+      LISTARINV – Lista o conteúdo do diretório em ordem decrescente
+      LISTARTUDO – Lista o conteúdo e subdiretórios
+      MUDAR <end_destino> – Altera o estado atual da pasta
+      ATUAL – Mostra o nome do diretório atual
+      COPIAR <origem> <destino> – Copia um arquivo/diretório
+      RENOMEAR <nome_atual> <nome_final> – Renomeia um arquivo ou diretório
+      MOVER <origem> <destino> – Move um arquivo/diretório
+      BUSCAR <nome_arquivo> [dir_de_busca] – Busca um arquivo na hierarquia
+      ALTERARUSR <login> <senha> - Fará o login de outro usuário
+      DELETARUSR <login> - Deleta um usuário do sistema
+      SAIR - Faz logout do usuário atual
+      CLEAR - Limpa a tela
+      QUIT - Encerra o programa
     `.trim())
-
-    return 0
-
-  },
-
-  alterarusr: (state: TerminalContext): number => {
-
-    handleAuthentication(state)
 
     return 0
 
@@ -76,21 +58,26 @@ const acceptedCommands: Record<string, (state: TerminalContext) => any> = {
 
   cdir: (state: TerminalContext): number => {
 
-    if (!validatePath(state)) return 1
-
     const folderName = state.arguments[0]
 
-    if (!folderName || specialCharacters.test(folderName)) return 1
+    if (!folderName || !isNameSafe(folderName)) return 1
 
     const { username } = state.user!
     const userHomePath = path.resolve('home', username)
+    const fullPath = path.resolve(state.currentFolder, folderName)
+
+    // Using the centralized security module
+    if (!isPathSafe(userHomePath, fullPath)) {
+      console.log('Acesso negado: Tentativa de evasão de diretório bloqueada.')
+      return 1
+    }
+
     const currentFolderNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
 
     if (!currentFolderNode || currentFolderNode.type !== 'folder') return 1
 
     if (currentFolderNode.children!.some(c => c.name === folderName)) return 1
 
-    const fullPath = path.resolve(state.currentFolder, folderName)
     fs.mkdirSync(fullPath, { recursive: true })
 
     currentFolderNode.children!.push({
@@ -107,23 +94,35 @@ const acceptedCommands: Record<string, (state: TerminalContext) => any> = {
 
   },
 
-  carq: (state: TerminalContext): number => {
+  alterarusr: (state: TerminalContext): number => {
 
-    if (!validatePath(state)) return 1
+    handleAuthentication(state)
+
+    return 0
+
+  },
+
+  carq: (state: TerminalContext): number => {
 
     const fileName = state.arguments[0]
 
-    if (!fileName || specialCharacters.test(fileName)) return 1
+    if (!fileName || !isNameSafe(fileName)) return 1
 
     const { username } = state.user!
     const userHomePath = path.resolve('home', username)
+    const fullPath = path.resolve(state.currentFolder, fileName)
+
+    if (!isPathSafe(userHomePath, fullPath)) {
+      console.log('Acesso negado: Tentativa de evasão bloqueada.')
+      return 1
+    }
+
     const currentFolderNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
 
     if (!currentFolderNode || currentFolderNode.type !== 'folder') return 1
 
     if (currentFolderNode.children!.some(c => c.name === fileName)) return 1
 
-    const fullPath = path.resolve(state.currentFolder, fileName)
     fs.writeFileSync(fullPath, '')
 
     currentFolderNode.children!.push({
@@ -142,18 +141,21 @@ const acceptedCommands: Record<string, (state: TerminalContext) => any> = {
 
   apagar: (state: TerminalContext): number => {
 
-    if (!validatePath(state)) return 1
-
     const targetName = state.arguments[0]
 
     if (!targetName) return 1
 
     const { username } = state.user!
+    const userHomePath = path.resolve('home', username)
     const fullPath = path.resolve(state.currentFolder, targetName)
+
+    if (!isPathSafe(userHomePath, fullPath)) {
+      console.log('Acesso negado.')
+      return 1
+    }
 
     if (!fs.existsSync(fullPath)) return 1
 
-    const userHomePath = path.resolve('home', username)
     const parentFolderNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
 
     if (parentFolderNode && parentFolderNode.type === 'folder') {
@@ -168,33 +170,78 @@ const acceptedCommands: Record<string, (state: TerminalContext) => any> = {
 
   },
 
+  rdir: (state: TerminalContext): number => {
+
+    const targetName = state.arguments[0]
+
+    if (!targetName) return 1
+
+    const { username } = state.user!
+    const userHomePath = path.resolve('home', username)
+    const absolutePath = path.resolve(state.currentFolder, targetName)
+
+    if (!isPathSafe(userHomePath, absolutePath)) {
+      console.log('Acesso negado.')
+      return 1
+    }
+
+    const targetNode = resolveVfsNode(tree[username], userHomePath, absolutePath)
+
+    if (!targetNode || targetNode.type !== 'folder') return 1
+
+    if (targetNode.children && targetNode.children.length > 0) {
+      console.log('Erro: O diretório não está vazio. Use APAGAR para remoção recursiva.')
+      return 1
+    }
+
+    const parentNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
+
+    if (parentNode && parentNode.type === 'folder') {
+      parentNode.children = parentNode.children!.filter(c => c.name !== targetName)
+    }
+
+    fs.rmdirSync(absolutePath)
+
+    saveTree()
+
+    return 0
+
+  },
+
   mover: (state: TerminalContext): number => {
 
     const [source, dest] = state.arguments
-
+    
     if (!source || !dest) return 1
 
     const { username } = state.user!
     const userHomePath = path.resolve('home', username)
-
+    
     // Physical operations
     const sourcePath = path.resolve(state.currentFolder, source)
     const destPath = path.resolve(state.currentFolder, dest, path.basename(source))
+
+    if (!isPathSafe(userHomePath, sourcePath) || !isPathSafe(userHomePath, destPath)) {
+      console.log('Acesso negado.')
+      return 1
+    }
 
     if (!fs.existsSync(sourcePath)) return 1
 
     fs.renameSync(sourcePath, destPath)
 
     // Update VFS memory map
-    const sourceParent = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
+    const sourceParentDir = path.dirname(sourcePath) // <-- Resolve o diretório pai real da origem
+    const sourceParent = resolveVfsNode(tree[username], userHomePath, sourceParentDir)
     const destParent = resolveVfsNode(tree[username], userHomePath, path.resolve(state.currentFolder, dest))
 
     if (!sourceParent || !destParent) return 1
 
     const nodeToMove = sourceParent.children!.find(c => c.name === path.basename(source))
-
+    
     if (!nodeToMove) return 1
 
+    // Quebra o link do diretório antigo e anexa no novo
     sourceParent.children = sourceParent.children!.filter(c => c.name !== nodeToMove.name)
     destParent.children!.push(nodeToMove)
 
@@ -364,46 +411,11 @@ const acceptedCommands: Record<string, (state: TerminalContext) => any> = {
 
   },
 
-  rdir: (state: TerminalContext): number => {
-
-    if (!validatePath(state)) return 1
-
-    const targetName = state.arguments[0]
-
-    if (!targetName) return 1
-
-    const { username } = state.user!
-    const userHomePath = path.resolve('home', username)
-    const absolutePath = path.resolve(state.currentFolder, targetName)
-
-    const targetNode = resolveVfsNode(tree[username], userHomePath, absolutePath)
-
-    if (!targetNode || targetNode.type !== 'folder') return 1
-
-    // Enforces the "empty directory" rule for rdir
-    if (targetNode.children && targetNode.children.length > 0) {
-      console.log('Erro: O diretório não está vazio. Use APAGAR para remoção recursiva.')
-      return 1
-    }
-
-    const parentNode = resolveVfsNode(tree[username], userHomePath, state.currentFolder)
-
-    if (parentNode && parentNode.type === 'folder') {
-      parentNode.children = parentNode.children!.filter(c => c.name !== targetName)
-    }
-
-    fs.rmdirSync(absolutePath)
-    saveTree()
-
-    return 0
-
-  },
-
   renomear: (state: TerminalContext): number => {
 
     const [currentName, newName] = state.arguments
 
-    if (!currentName || !newName || specialCharacters.test(newName)) return 1
+    if (!currentName || !newName || !isNameSafe(newName)) return 1
 
     const { username } = state.user!
     const userHomePath = path.resolve('home', username)
