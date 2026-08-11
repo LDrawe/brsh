@@ -9,11 +9,15 @@ An educational Command Line Interface (CLI) emulator and Virtual File System (VF
 ## Key Features
 
 * PT-BR Native Interface: Fully localized command suite (e.g., `listar`, `carq`, `apagar`) built specifically for Brazilian Portuguese speakers and educational environments.
+
 * Virtual File System (VFS): Operates on an in-memory nested tree structure (IVfsNode), mapping virtual paths to physical OS storage seamlessly.
-* Virtual File System (VFS): Operates on an in-memory nested tree structure (IVfsNode), mapping virtual paths to physical OS storage seamlessly.
+
 * Atomic I/O Operations: Implements atomic writing strategies (temp-to-rename) to prevent tree corruption during sudden process terminations.
-* Kernel-Level Sandboxing: Strict directory traversal protection (chroot jail equivalent) ensures users cannot escape their designated /home environment.
+
+* Kernel-Level Sandboxing: Strict directory traversal protection (chroot jail equivalent) ensures users cannot escape their designated `/home` environment.
+
 * POSIX-Compliant Signaling: Graceful exit handling for SIGINT (Ctrl+C) and EOF (Ctrl+D), mimicking authentic Linux bash behavior.
+
 * Zero-Overhead Runtime: Architected to run natively via Node.js, Bun, or Deno with minimal third-party dependencies.
 
 ## Architecture Overview
@@ -27,6 +31,7 @@ src/
 ├── core/         # Kernel Space: Security, atomic I/O, VFS pointers, and authentication.
 └── types/        # TypeScript Interfaces (IUser, IVfsNode, TerminalContext).
 ```
+
 ## Command Suite
 
 brsh supports a comprehensive suite of directory and file management commands:
@@ -51,23 +56,37 @@ brsh supports a comprehensive suite of directory and file management commands:
 ## Getting Started
 
 ### Prerequisites
+
 * Node.js v20+ or Bun installed.
 
 ### Installation
 
 1. Clone the repository:
-   git clone https://github.com/LDrawe/brsh.git
-   cd brsh
+
+```bash
+git clone https://github.com/LDrawe/brsh.git
+cd brsh
+```
 
 2. Install dependencies:
-   npm install
+
+```bash
+npm install
+```
 
 3. Boot the terminal:
-   npm start
+
+```bash
+npm start
+```
 
 ### Running Tests
-The project is covered by a robust suite of unit and integration tests using the native node:test runner.
+
+The project is covered by a robust suite of unit and integration tests using the native `node:test` runner.
+
+```bash
 npm test
+```
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
