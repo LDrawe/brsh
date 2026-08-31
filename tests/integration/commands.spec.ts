@@ -7,6 +7,7 @@ import { acceptedCommands } from '../../src/cli/commands'
 import { consultUser } from '../../src/core/auth/authentication'
 import { boot } from '../../src/core/boot'
 import { TerminalContext } from '../../src/types/Aplication'
+import { VFSError } from '../../src/core/vfs/errors'
 
 const state: TerminalContext = {
   command: '',
@@ -59,19 +60,14 @@ describe('Directory Commands', () => {
   })
 
   it('Should fail to create an invalid directory', () => {
-    const code1 = acceptedCommands.cdir({ ...state, arguments: [] })
-    const code2 = acceptedCommands.cdir({ ...state, arguments: ['teste./*`'] })
-    const code3 = acceptedCommands.cdir({ ...state, arguments: [testDir] }) // Already exists
-
-    assert.strictEqual(code1, 1)
-    assert.strictEqual(code2, 1)
-    assert.strictEqual(code3, 1)
+    assert.throws(() => acceptedCommands.cdir({ ...state, arguments: [] }), VFSError)
+    assert.throws(() => acceptedCommands.cdir({ ...state, arguments: ['teste./*`'] }), VFSError)
+    assert.throws(() => acceptedCommands.cdir({ ...state, arguments: [testDir] }), VFSError) // Already exists
   })
 
   it('Should fail to delete a non-empty directory', () => {
     acceptedCommands.carq({ ...state, arguments: ['temp.js'], currentFolder: path.resolve(state.currentFolder, testDir) })
-    const code = acceptedCommands.rdir({ ...state, arguments: [testDir] })
-    assert.strictEqual(code, 1)
+    assert.throws(() => acceptedCommands.rdir({ ...state, arguments: [testDir] }), VFSError)
   })
 
   it('Should be able to delete a directory recursively (apagar)', () => {
@@ -99,13 +95,9 @@ describe('File Commands', () => {
   })
 
   it('should fail to create invalid files', () => {
-    const code1 = acceptedCommands.carq({ ...state, arguments: [] })
-    const code2 = acceptedCommands.carq({ ...state, arguments: ['%&*./.js'] })
-    const code3 = acceptedCommands.carq({ ...state, arguments: [testFile] }) // Already exists
-
-    assert.strictEqual(code1, 1)
-    assert.strictEqual(code2, 1)
-    assert.strictEqual(code3, 1)
+    assert.throws(() => acceptedCommands.carq({ ...state, arguments: [] }), VFSError)
+    assert.throws(() => acceptedCommands.carq({ ...state, arguments: ['%&*./.js'] }), VFSError)
+    assert.throws(() => acceptedCommands.carq({ ...state, arguments: [testFile] }), VFSError) // Already exists
   })
 
   it('should be able to copy file', () => {
@@ -143,7 +135,6 @@ describe('File Commands', () => {
 
 describe('Admin Commands', () => {
   it('should fail to delete an user without privilege', () => {
-    const code = acceptedCommands.deletarusr({ ...state, arguments: ['root'] })
-    assert.strictEqual(code, 1)
+    assert.throws(() => acceptedCommands.deletarusr({ ...state, arguments: ['root'] }), VFSError)
   })
 })

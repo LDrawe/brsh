@@ -1,6 +1,6 @@
 {
   "name": "brsh",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "An advanced Virtual File System (VFS) and CLI emulator built with Node.js, featuring an in-memory nested inode tree, atomic storage synchronization, and strict path sandboxing",
   "main": "index.ts",
   "scripts": {
