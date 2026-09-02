@@ -9,14 +9,14 @@
   <a href="https://www.typescriptlang.org/">
     <img src="./assets/badges/typescript.svg" alt="TypeScript" />
   </a>
-  <a href="https://github.com/LDrawe/brsh/actions/workflows/ci.yml">
+  <a href="https://github.com/LDrawe/brsh/actions/workflows/tests.yml">
     <img src="./assets/badges/ci-status.svg" alt="CI Status" />
   </a>
   <br />
   <br />
 </div>
 
-**Brsh** is a TypeScript-based educational project that emulates the core principles of a real Operating System. It implements an in-memory nested inode tree, two-way synchronization with the physical disk, and strict directory sandboxing, all exposed through a fully localized Brazilian Portuguese (PT-BR) CLI.
+**Brsh** is a TypeScript-based educational project that emulates the core principles of a real filesystem. Originally built as a university assignment on Operating Systems, the project now implements many advanced features, such as an in-memory nested inode tree, two-way synchronization with the physical disk, strict directory sandboxing, and an atomic I/O operations, all exposed through a fully localized Brazilian Portuguese (PT-BR) CLI.
 
 ---
 
@@ -26,7 +26,7 @@
 - 🗂️ **Virtual File System (VFS)**: An in-memory object-oriented nested tree (`IVfsNode`) that syncs automatically with the physical disk.
 - 🔁 **2-Way Sync (Smart Boot)**: Recovers physically deleted files based on memory state, and pulls physical files into the VFS on boot.
 - 🛡️ **Kernel Sandboxing**: Anti-Directory-Traversal protection. It creates a *chroot jail* model that prevents users from escaping their `/home` environment.
-- ⚛️ **Atomic I/O Operations**: Implements atomic writing strategies (temp-to-rename) to prevent tree corruption during sudden process terminations.
+- ⚛️ **Atomic I/O Operations**: Implements atomic writing (temp-to-rename) to prevent tree corruption during sudden process terminations.
 - 🛑 **POSIX-Compliant Signaling**: Graceful exit handling for `SIGINT` (Ctrl+C) and `EOF` (Ctrl+D), mimicking authentic Linux bash behavior.
 - ⚡ **Zero-Overhead Runtime**: Built to run natively on `Node.js` (using Type Stripping) or fast runtimes like `Bun` and `Deno`.
 

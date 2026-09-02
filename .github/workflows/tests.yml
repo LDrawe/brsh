@@ -1,4 +1,4 @@
-name: VFS Core CI
+name: Automated Test Suite
 
 on:
   push:

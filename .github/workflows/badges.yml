@@ -1,8 +1,10 @@
 name: Update Local Badges
 
 on:
-  schedule:
-    - cron: "0 0 1 */4 *"
+  workflow_run:
+    workflows: ["Automated Test Suite"]
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -18,7 +20,7 @@ jobs:
       - name: Download Badges
         run: |
           mkdir -p assets/badges
-          curl -s -L -o assets/badges/ci-status.svg "https://img.shields.io/github/actions/workflow/status/LDrawe/brsh/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white"
+          curl -s -L -o assets/badges/ci-status.svg "https://img.shields.io/github/actions/workflow/status/LDrawe/brsh/tests.yml?style=for-the-badge&logo=githubactions&logoColor=white"
 
       - name: Commit badges
         run: |
