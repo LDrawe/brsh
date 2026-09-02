@@ -1,92 +1,114 @@
-# Brsh (Terminal Emulator & Virtual File System)
+<div align="center">
+  <img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Desktop%20computer/3D/desktop_computer_3d.png" width="120" alt="Brsh Logo" />
+  <h1>Brsh (Virtual OS & CLI Emulator)</h1>
+  <p><em>An educational Terminal and Virtual File System (VFS) emulator focused on OS architecture.</em></p>
 
-![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?style=flat-square&logo=node.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)
-![CI Status](https://github.com/LDrawe/brsh/actions/workflows/ci.yml/badge.svg)
+  <a href="https://nodejs.org">
+    <img src="https://img.shields.io/badge/Node.js-26.x-339933?style=for-the-badge&logo=node.js" alt="Node.js" />
+  </a>
+  <a href="https://www.typescriptlang.org/">
+    <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
+  </a>
+  <a href="https://github.com/LDrawe/brsh/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/LDrawe/brsh/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white" alt="CI Status" />
+  </a>
+  <br />
+  <br />
+</div>
 
-An educational Command Line Interface (CLI) emulator and Virtual File System (VFS) built entirely in TypeScript, featuring a fully localized Brazilian Portuguese (PT-BR) command suite. Designed to teach core operating system principles, it implements an in-memory nested inode tree, atomic memory-to-disk synchronization, and strict path sandboxing.
+**Brsh** is a TypeScript-based educational project that emulates the core principles of a real Operating System. It implements an in-memory nested inode tree, two-way synchronization with the physical disk, and strict directory sandboxing, all exposed through a fully localized Brazilian Portuguese (PT-BR) CLI.
 
-## Key Features
+---
 
-* PT-BR Native Interface: Fully localized command suite (e.g., `listar`, `carq`, `apagar`) built specifically for Brazilian Portuguese speakers and educational environments.
+## 📝 Features
 
-* Virtual File System (VFS): Operates on an in-memory nested tree structure (IVfsNode), mapping virtual paths to physical OS storage seamlessly.
+- **PT-BR Interface**: Full command suite built specifically for Brazilian Portuguese speakers (`listar`, `carq`, `apagar`, `renomear`).
+- 🗂️ **Virtual File System (VFS)**: An in-memory object-oriented nested tree (`IVfsNode`) that syncs automatically with the physical disk.
+- 🔁 **2-Way Sync (Smart Boot)**: Recovers physically deleted files based on memory state, and pulls physical files into the VFS on boot.
+- 🛡️ **Kernel Sandboxing**: Anti-Directory-Traversal protection. It creates a *chroot jail* model that prevents users from escaping their `/home` environment.
+- ⚛️ **Atomic I/O Operations**: Implements atomic writing strategies (temp-to-rename) to prevent tree corruption during sudden process terminations.
+- 🛑 **POSIX-Compliant Signaling**: Graceful exit handling for `SIGINT` (Ctrl+C) and `EOF` (Ctrl+D), mimicking authentic Linux bash behavior.
+- ⚡ **Zero-Overhead Runtime**: Built to run natively on `Node.js` (using Type Stripping) or fast runtimes like `Bun` and `Deno`.
 
-* Atomic I/O Operations: Implements atomic writing strategies (temp-to-rename) to prevent tree corruption during sudden process terminations.
+---
 
-* Kernel-Level Sandboxing: Strict directory traversal protection (chroot jail equivalent) ensures users cannot escape their designated `/home` environment.
+## 🏗️ Architecture
 
-* POSIX-Compliant Signaling: Graceful exit handling for SIGINT (Ctrl+C) and EOF (Ctrl+D), mimicking authentic Linux bash behavior.
+The codebase applies solid design patterns (Command Pattern, Singletons) and strictly separates Kernel space from User space:
 
-* Zero-Overhead Runtime: Architected to run natively via Node.js, Bun, or Deno with minimal third-party dependencies.
-
-## Architecture Overview
-
-The codebase strictly separates the Kernel space (core logic) from the User space (CLI/presentation):
-
-```text
-src/
-├── cli/          # User Space: Interface orchestration, command parsing, and REPL loop.
-├── config/       # Database Layer: JSON-based VFS map and user credentials.
-├── core/         # Kernel Space: Security, atomic I/O, VFS pointers, and authentication.
-└── types/        # TypeScript Interfaces (IUser, IVfsNode, TerminalContext).
+```mermaid
+graph TD;
+    CLI[User Space: CLI & REPL] --> Auth[Auth Module];
+    CLI --> Commands[Command Parsers];
+    Commands --> VFS[VFS Engine Singleton];
+    VFS --> Security[Path Sandboxing];
+    Security --> IO[Atomic File I/O];
+    IO --> OS[(Physical OS Disk)];
 ```
 
-## Command Suite
+- 📂 `src/cli/` — User space (REPL loop, UI, and Command Pattern implementation).
+- 📂 `src/config/` — Static database (Source of Truth) and user credentials.
+- 📂 `src/core/` — Kernel space (Sandboxing, VFS state, and atomic I/O).
 
-brsh supports a comprehensive suite of directory and file management commands:
+---
 
-| Command | Syntax | Description |
+## 💻 Commands
+
+**Brsh** supports a complete ecosystem for file management.
+
+### Directory Navigation
+| Command | Parameters | Description |
 | :--- | :--- | :--- |
-| Directory | cdir <name> | Creates a new directory. |
-| | rdir <name> | Removes an empty directory. |
-| | listar / listarinv | Lists directory contents (alphabetical / reverse). |
-| | listartudo | Recursively prints the directory tree. |
-| | mudar <path> | Changes current working directory (cd). |
-| | atual | Prints current working directory (pwd). |
-| Files | carq <name> | Creates an empty file (touch). |
-| | apagar <name> | Deletes a file or directory recursively (rm -rf). |
-| | copiar <src> <dst>| Copies file/folder to destination. |
-| | mover <src> <dst> | Moves file/folder to destination. |
-| | buscar <name> [dir]| Deep search for a file in the VFS. |
-| | renomear <old> <new>| Renames a file or directory. |
-| System | alterarusr, deletarusr| Manage user sessions and accounts. |
-| | clear, help, quit | Utilities and exit commands. |
+| `cdir` | `<name>` | Creates a new directory. |
+| `rdir` | `<name>` | Removes a directory (only if empty). |
+| `mudar` | `<path>` | Changes the current working directory. |
+| `atual` | - | Prints the absolute path of the current directory. |
+| `listar` | - | Lists files and subfolders in alphabetical order. |
+| `listarinv` | - | Lists files and subfolders in reverse alphabetical order. |
+| `listartudo`| - | Recursively lists the entire directory tree. |
 
-## Getting Started
+### File Operations
+| Command | Parameters | Description |
+| :--- | :--- | :--- |
+| `carq` | `<name>` | Creates an empty file (`touch`). |
+| `apagar` | `<target>` | Recursively deletes a file or directory (`rm -rf`).|
+| `copiar` | `<src>` `<dst>`| Copies a file/folder, assigning new virtual IDs. |
+| `mover` | `<src>` `<dst>`| Moves a file/folder. |
+| `renomear`| `<old>` `<new>`| Renames a file/folder in the same directory. |
+| `buscar` | `<name>` | Deep search (DFS) for a file. |
+| `listaratr`| `<target>` | Shows disk attributes and creation date. |
 
-### Prerequisites
+### System Utilities
+| Command | Parameters | Description |
+| :--- | :--- | :--- |
+| `alterarusr`| `<login>` | Switches user sessions. |
+| `deletarusr`| `<login>` | Deletes a user environment and revokes access. |
+| `resetar` | - | Formats the VFS, wiping the disk and rebuilding the system. |
+| `clear` | - | Clears the terminal screen. |
+| `quit` | - | Exits the shell cleanly. |
 
-* Node.js v20+ or Bun installed.
+---
 
-### Installation
+## 🚀 Getting Started
 
-1. Clone the repository:
+### 1. Prerequisites
+- **Node.js** (v24+) or **Bun** (v1.x)
+- **Git**
 
+### 2. Running the Project
 ```bash
 git clone https://github.com/LDrawe/brsh.git
 cd brsh
-```
 
-2. Install dependencies:
-
-```bash
 npm install
-```
-
-3. Boot the terminal:
-
-```bash
 npm start
 ```
 
-### Running Tests
+---
 
-The project is covered by a robust suite of unit and integration tests using the native `node:test` runner.
+## 🧪 Testing
+The architecture features **100% test coverage**, continuously validating concurrency and Path Traversal Exploits.
 
 ```bash
 npm test
 ```
-
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
