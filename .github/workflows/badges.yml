@@ -1,0 +1,29 @@
+name: Update Local Badges
+
+on:
+  schedule:
+    - cron: "0 0 1 */4 *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Badges
+        run: |
+          mkdir -p assets/badges
+          curl -s -L -o assets/badges/ci-status.svg "https://img.shields.io/github/actions/workflow/status/LDrawe/brsh/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white"
+
+      - name: Commit badges
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/badges/*.svg
+          git commit -m "ci: update badges locally" || exit 0
+          git push

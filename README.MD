@@ -4,13 +4,13 @@
   <p><em>An educational Terminal and Virtual File System (VFS) emulator focused on OS architecture.</em></p>
 
   <a href="https://nodejs.org">
-    <img src="https://img.shields.io/badge/Node.js-26.x-339933?style=for-the-badge&logo=node.js" alt="Node.js" />
+    <img src="./assets/badges/nodejs.svg" alt="Node.js" />
   </a>
   <a href="https://www.typescriptlang.org/">
-    <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
+    <img src="./assets/badges/typescript.svg" alt="TypeScript" />
   </a>
   <a href="https://github.com/LDrawe/brsh/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/LDrawe/brsh/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white" alt="CI Status" />
+    <img src="./assets/badges/ci-status.svg" alt="CI Status" />
   </a>
   <br />
   <br />
