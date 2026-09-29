@@ -6,7 +6,8 @@
   "scripts": {
     "start": "tsx index.ts",
     "dev": "tsx index.ts",
-    "test": "tsx --test tests/**/*.spec.ts"
+    "test": "tsx --test --test-concurrency=1 \"tests/**/*.spec.ts\"",
+    "test:coverage": "tsx --test --experimental-test-coverage --test-concurrency=1 --test-coverage-include=\"src/**\" \"tests/**/*.spec.ts\""
   },
   "keywords": [],
   "author": "Eduardo Portilho <eduardomportilho@gmail.com>",

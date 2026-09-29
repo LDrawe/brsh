@@ -10,7 +10,7 @@ const users = usersData as unknown as IUser[]
 export const systemCommands = {
   quit: () => process.exit(0),
 
-  help: (state: TerminalContext): number => {
+  help: (): number => {
     console.log(`
       CDIR <nome_do_diretório> – Cria um novo diretório
       CARQ <nome_do_arquivo> – Cria um novo arquivo

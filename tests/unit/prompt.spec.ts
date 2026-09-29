@@ -1,26 +1,28 @@
-import { describe, it } from 'node:test'
+import { describe, it, afterEach } from 'node:test'
 import assert from 'node:assert'
-import { randomBytes } from 'node:crypto'
+import { prompt, zsh } from '../../src/cli/prompt'
 
 describe('Prompt', () => {
-  it('Should be able to ask for input and return a string', () => {
-    let logCalls = 0
-    const originalLog = console.log
+  afterEach(() => {
+    prompt.resetPrompt()
+  })
 
-    // Native Mocking to ensure cross-runtime compatibility (Node/Bun/Deno)
-    console.log = (msg: string) => { logCalls++ }
+  it('Should be able to ask for input and return a string using custom prompt', () => {
+    prompt.setPrompt((ask?: string) => `response_to_${ask}`)
+    const result = prompt('What is your name?')
+    assert.strictEqual(result, 'response_to_What is your name?')
+  })
 
-    const mockPrompt = (question: string) => {
-      console.log(question)
-      return randomBytes(5).toString('hex')
-    }
+  it('Should format zsh prompt correctly', () => {
+    let capturedQuestion = ''
+    prompt.setPrompt((ask?: string) => {
+      capturedQuestion = ask || ''
+      return 'ls -la'
+    })
 
-    const input = mockPrompt('Question')
-
-    assert.strictEqual(logCalls > 0, true)
-    assert.ok(input)
-
-    // Restore original console
-    console.log = originalLog
+    const result = zsh('eduardo', '/home/eduardo')
+    assert.strictEqual(result, 'ls -la')
+    assert.ok(capturedQuestion.includes('eduardo'))
+    assert.ok(capturedQuestion.includes('/home/eduardo'))
   })
 })

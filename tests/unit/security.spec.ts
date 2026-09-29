@@ -25,4 +25,8 @@ describe('Security Module: VFS Sandboxing and Input Sanitization', () => {
     assert.strictEqual(isNameSafe('meu_arquivo.js'), true)
     assert.strictEqual(isNameSafe('trabalho-final'), true)
   })
+
+  it('Should reject paths across different drives (absolute relative paths)', () => {
+    assert.strictEqual(isPathSafe('C:\\home\\eduardo', 'D:\\other\\path'), false)
+  })
 })
