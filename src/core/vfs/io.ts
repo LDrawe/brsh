@@ -13,10 +13,8 @@ export function writeAtomically(targetPath: string, data: any): void {
     } catch (e: any) {
       if (e.code === 'EPERM' && retries > 1) {
         retries--;
-        // At least we wait a bit before retrying, although synchronous sleep in node is ugly,
-        // it's fine for our toy use case.
-        const start = Date.now();
-        while (Date.now() - start < 10) {} 
+        // Non-busy synchronous sleep in OS kernel without spinning the CPU in a busy loop
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
       } else {
         throw e;
       }
