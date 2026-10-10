@@ -211,6 +211,19 @@ describe('File Commands', () => {
     assert.strictEqual(exec('listaratr', [testFolder]), 0)
   })
 
+  it('should be able to stream and read file content with ler', async () => {
+    assert.throws(() => exec('ler', []), VFSError)
+    assert.throws(() => exec('ler', ['arquivo_inexistente.txt']), VFSError)
+    assert.throws(() => exec('ler', [testFolder]), VFSError)
+
+    const lerFile = 'ler_stream_test.txt'
+    exec('carq', [lerFile])
+    assert.strictEqual(exec('ler', [lerFile]), 0)
+
+    await new Promise(resolve => setTimeout(resolve, 50))
+    exec('apagar', [lerFile])
+  })
+
   it('should be able to delete file', () => {
     assert.strictEqual(exec('apagar', [testFile]), 0)
     exec('apagar', [testFolder]) // Cleanup

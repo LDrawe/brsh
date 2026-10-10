@@ -12,20 +12,21 @@ export const systemCommands = {
 
   help: (): number => {
     console.log(`
-      CDIR <nome_do_diretório> – Cria um novo diretório
-      CARQ <nome_do_arquivo> – Cria um novo arquivo
-      LISTARATR <nome_do_arq_ou_dir> – Lista os atributos de um arquivo ou diretório
-      RDIR <nome_do_dir> – Apaga um diretório vazio
-      APAGAR <nome> – Apaga um arquivo ou um diretório com arquivos
-      LISTAR – Lista o conteúdo do diretório atual, em ordem alfabética
-      LISTARINV – Lista o conteúdo do diretório em ordem decrescente
-      LISTARTUDO – Lista o conteúdo e subdiretórios
-      MUDAR <end_destino> – Altera o estado atual da pasta
-      ATUAL – Mostra o nome do diretório atual
-      COPIAR <origem> <destino> – Copia um arquivo/diretório
-      RENOMEAR <nome_atual> <nome_final> – Renomeia um arquivo ou diretório
-      MOVER <origem> <destino> – Move um arquivo/diretório
-      BUSCAR <nome_arquivo> [dir_de_busca] – Busca um arquivo na hierarquia
+      CDIR <nome_do_diretório> - Cria um novo diretório
+      CARQ <nome_do_arquivo> - Cria um novo arquivo
+      LER <nome_do_arquivo> - Exibe o conteúdo de um arquivo
+      LISTARATR <nome_do_arq_ou_dir> - Lista os atributos de um arquivo ou diretório
+      RDIR <nome_do_dir> - Apaga um diretório vazio
+      APAGAR <nome> - Apaga um arquivo ou um diretório com arquivos
+      LISTAR - Lista o conteúdo do diretório atual, em ordem alfabética
+      LISTARINV - Lista o conteúdo do diretório em ordem decrescente
+      LISTARTUDO - Lista o conteúdo e subdiretórios
+      MUDAR <end_destino> - Altera o estado atual da pasta
+      ATUAL - Mostra o nome do diretório atual
+      COPIAR <origem> <destino> - Copia um arquivo/diretório
+      RENOMEAR <nome_atual> <nome_final> - Renomeia um arquivo ou diretório
+      MOVER <origem> <destino> - Move um arquivo/diretório
+      BUSCAR <nome_arquivo> [dir_de_busca] - Busca um arquivo na hierarquia
       ALTERARUSR <login> <senha> - Fará o login de outro usuário
       DELETARUSR <login> - Deleta um usuário do sistema
       RESETAR - Formata o VFS e apaga todos os arquivos criados

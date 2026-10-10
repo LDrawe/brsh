@@ -129,6 +129,29 @@ export const fileCommands = {
     return 0
   },
 
+  ler: (state: TerminalContext): number => {
+    const fileName = state.arguments[0]
+    if (!fileName) throw new VFSError('Nome do arquivo não fornecido.')
+
+    const { username } = state.user!
+    const userHomePath = path.resolve('home', username)
+    const fullPath = path.resolve(state.currentFolder, fileName)
+
+    vfs.validatePathSafe(userHomePath, fullPath)
+
+    if (!fs.existsSync(fullPath)) throw new VFSError('Arquivo não encontrado no disco.')
+    if (fs.statSync(fullPath).isDirectory()) throw new VFSError('O alvo especificado é um diretório, não um arquivo.')
+
+    // Efficient streaming read piped directly to standard output (stdout)
+    const readStream = fs.createReadStream(fullPath)
+    readStream.on('error', (err) => {
+      console.error(`Erro ao ler arquivo: ${err.message}`)
+    })
+    readStream.pipe(process.stdout)
+
+    return 0
+  },
+
   renomear: (state: TerminalContext): number => {
     const [currentName, newName] = state.arguments
     if (!currentName || !newName) throw new VFSError('Parâmetros insuficientes.')
