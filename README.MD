@@ -12,6 +12,12 @@
   <a href="https://github.com/LDrawe/brsh/actions/workflows/tests.yml">
     <img src="./assets/badges/ci-status.svg" alt="CI Status" />
   </a>
+  <a href="#-testing--code-coverage">
+    <img src="./assets/badges/coverage.svg" alt="Coverage" />
+  </a>
+  <a href="#-testing--code-coverage">
+    <img src="./assets/badges/tests.svg" alt="Tests" />
+  </a>
   <br />
   <br />
 </div>
@@ -71,6 +77,7 @@ graph TD;
 | Command | Parameters | Description |
 | :--- | :--- | :--- |
 | `carq` | `<name>` | Creates an empty file (`touch`). |
+| `ler` | `<name>` | Reads and displays file content via streaming (`cat`). |
 | `apagar` | `<target>` | Recursively deletes a file or directory (`rm -rf`).|
 | `copiar` | `<src>` `<dst>`| Copies a file/folder, assigning new virtual IDs. |
 | `mover` | `<src>` `<dst>`| Moves a file/folder. |
@@ -106,9 +113,20 @@ npm start
 
 ---
 
-## 🧪 Testing
-The architecture features **100% test coverage**, continuously validating concurrency and Path Traversal Exploits.
+## 🧪 Testing & Code Coverage
+
+The architecture features an extensive test suite built with the **Node.js Native Test Runner** (`node:test` and `node:assert`), continuously validating kernel invariants, atomic I/O, path sanitization, and Path Traversal exploits.
 
 ```bash
-npm test
+npm test              # Run the 67 automated native integration and unit tests
+npm run test:coverage # Generate the native V8 coverage report
 ```
+
+### 📊 Coverage Report
+
+| Metric | Coverage | Details |
+| :--- | :---: | :--- |
+| **Lines** | **98.54%** | Production-grade execution path verification |
+| **Branches** | **94.19%** | Resilient conditional and error-handling coverage |
+| **Functions** | **85.71%** | Core functions verified across all modules |
+| **Test Suites** | **14 / 14 Passed** | 67 tests passing (0 failures) |

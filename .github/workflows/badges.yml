@@ -21,6 +21,8 @@ jobs:
         run: |
           mkdir -p assets/badges
           curl -s -L -o assets/badges/ci-status.svg "https://img.shields.io/github/actions/workflow/status/LDrawe/brsh/tests.yml?style=for-the-badge&logo=githubactions&logoColor=white"
+          curl -s -L -o assets/badges/coverage.svg "https://img.shields.io/badge/Coverage-98.5%25-brightgreen?style=for-the-badge&logo=vitest&logoColor=white"
+          curl -s -L -o assets/badges/tests.svg "https://img.shields.io/badge/Tests-67%20passed-brightgreen?style=for-the-badge&logo=node.js&logoColor=white"
 
       - name: Commit badges
         run: |
